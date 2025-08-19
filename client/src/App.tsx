@@ -1,7 +1,9 @@
+import Login from "./pages/Login";
+
 function App() {
   return (
     <>
-      <h1 className="text-6xl text-blue-800 font-bold">Hello</h1>
+      <Login />
     </>
   );
 }
