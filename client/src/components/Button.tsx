@@ -1,5 +1,4 @@
 import { cva } from "class-variance-authority";
-import { useMemo } from "react";
 
 interface ButtonProps {
   handleClick: () => void;
