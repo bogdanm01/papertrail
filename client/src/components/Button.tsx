@@ -11,7 +11,7 @@ interface ButtonProps {
 }
 
 const buttonCva = cva(
-  "flex items-center justify-center gap-2 px-4 py-2.5 cursor-pointer",
+  "flex items-center justify-center gap-2 px-4 py-2.5 cursor-pointer hover:opacity-90 transition delay-50 ease-in",
   {
     variants: {
       variant: {
