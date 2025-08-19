@@ -1,6 +1,20 @@
 @import "tailwindcss";
 
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  font-optical-sizing: none;
+}
+
 @theme {
+  --font-sans: Inter, sans-serif;
+  --font-weight-light: 300;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
   /* Neutral */
   --color-neutral-950: #0e121b;
   --color-neutral-900: #191b25;
@@ -27,4 +41,56 @@
   /* Red */
   --color-red-500: #fb3748;
   --color-red-100: #ffd5d8;
+}
+
+@utility text-preset-1 {
+  font-family: var(--font-sans);
+  font-weight: var(--font-weight-bold);
+  font-size: 24px;
+  line-height: 120%;
+  letter-spacing: -0.5px;
+}
+
+@utility text-preset-2 {
+  font-family: var(--font-sans);
+  font-weight: var(--font-weight-bold);
+  font-size: 20px;
+  line-height: 120%;
+  letter-spacing: -0.5px;
+}
+
+@utility text-preset-3 {
+  font-family: var(--font-sans);
+  font-weight: var(--font-weight-semibold);
+  font-size: 16px;
+  line-height: 120%;
+  letter-spacing: -0.3px;
+}
+
+@utility text-preset-4 {
+  font-family: var(--font-sans);
+  font-weight: var(--font-weight-medium);
+  font-size: 14px;
+  line-height: 120%;
+  letter-spacing: -0.2px;
+}
+
+@utility text-preset-5 {
+  font-family: var(--font-sans);
+  font-weight: var(--font-weight-regular);
+  font-size: 14px;
+  line-height: 120%;
+  letter-spacing: -0.2px;
+}
+
+@utility text-preset-6 {
+  font-family: var(--font-sans);
+  font-weight: var(--font-weight-regular);
+  font-size: 12px;
+  line-height: 120%;
+  letter-spacing: -0.2px;
+}
+
+@utility large-shadow {
+  box-shadow: 0 8px 12px 0 rgba(240, 240, 240, 0.6);
 }
