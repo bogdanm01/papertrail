@@ -70,7 +70,7 @@ function Login() {
 export function CustomInput({ id, label, type, placeholder, icon }: any) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor="password" className="text-preset-4 text-neutral-950">
+      <label htmlFor={id} className="text-preset-4 text-neutral-950">
         {label}
       </label>
       <div className="relative">
