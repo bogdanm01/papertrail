@@ -36,10 +36,16 @@ function Login() {
 
         <div className="border-t border-neutral-200 flex flex-col text-center pt-6 gap-4">
           <p className="text-preset-5 text-neutral-600">Or log in with:</p>
-          <button className="flex items-center justify-center gap-2 border border-neutral-300 text-neutral-950 rounded-xl px-4 py-2.5 cursor-pointer font-medium tracking-wide">
+
+          <Button
+            handleClick={() => {}}
+            variant="outline"
+            radius="xl"
+            fontWeight="medium"
+          >
             <img src={googleIcon} alt="google icon" />
             Google
-          </button>
+          </Button>
         </div>
 
         <hr className="text-neutral-200" />
