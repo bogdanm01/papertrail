@@ -10,25 +10,17 @@ const tsconfigRootDir = fileURLToPath(new URL('.', import.meta.url));
 
 export default [
   { ignores: ['dist/**'] },
-
-  // JS base rules (note we use `eslint`, not `js`)
   eslint.configs.recommended,
-
-  // TS rule sets (these are arrays; spread them)
   ...tseslint.configs.strictTypeChecked,
   ...tseslint.configs.stylisticTypeChecked,
-
-  // Perfectionist preset
   perfectionist.configs['recommended-natural'],
-
-  // Enable type-aware linting for TS files
   {
     files: ['**/*.ts'],
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
-        project: ['./tsconfig.json'], // points to your server/tsconfig.json
-        tsconfigRootDir, // resolves relative to this file
+        project: ['./tsconfig.json'],
+        tsconfigRootDir,
       },
     },
     rules: {
