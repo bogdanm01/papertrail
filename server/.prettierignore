@@ -124,4 +124,3 @@ input*.json
 devops/scheduler/cdk.out
 devops/scheduler/*.js
 cdk*
-.qodo
