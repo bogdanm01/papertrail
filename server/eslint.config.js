@@ -13,7 +13,6 @@ export default [
   eslint.configs.recommended,
   ...tseslint.configs.strictTypeChecked,
   ...tseslint.configs.stylisticTypeChecked,
-  perfectionist.configs['recommended-natural'],
   {
     files: ['**/*.ts'],
     languageOptions: {
