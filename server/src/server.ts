@@ -7,7 +7,7 @@ import swaggerJSDoc from 'swagger-jsdoc';
 import authRouter from '@/routes/auth.routes.js';
 
 import { PORT } from './config/env.js';
-import { swaggerOptions } from './config/swagger.js';
+import { baseOpenapiSpec } from './config/swagger.js';
 
 const app = express();
 
@@ -16,7 +16,7 @@ app.use(express.urlencoded({ extended: false }));
 
 app.use('/api/v1/auth', authRouter);
 
-const openapiSpec: OpenAPIV3.Document = swaggerJSDoc(swaggerOptions) as OpenAPIV3.Document;
+const openapiSpec: OpenAPIV3.Document = swaggerJSDoc(baseOpenapiSpec) as OpenAPIV3.Document;
 
 app.get('/docs.json', (_req, res) => res.json(openapiSpec));
 

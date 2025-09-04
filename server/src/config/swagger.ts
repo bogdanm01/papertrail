@@ -1,6 +1,6 @@
 import { type Options } from 'swagger-jsdoc';
 
-export const swaggerOptions: Options = {
+export const baseOpenapiSpec: Options = {
   apis: ['src/routes/*.ts', 'src/openapi/**/*.yaml'],
   definition: {
     info: { description: 'API docs', title: 'My API', version: '1.0.0' },
