@@ -1,11 +1,10 @@
 import db from '@/data/db.js';
-import { notesTable } from '@/data/schema/note.schema.js';
+import type { Note } from '@/data/entity.type.js';
+import { noteTable } from '@/data/schema/note.schema.js';
 import { type RequestHandler } from 'express';
 
-export type NoteSelect = typeof notesTable.$inferSelect;
-
 export const getAllNotes: RequestHandler = async (req, res) => {
-  const notes: NoteSelect[] = await db.select().from(notesTable);
+  const notes: Note[] = await db.select().from(noteTable);
   res.status(200).send({ data: notes });
 };
 
