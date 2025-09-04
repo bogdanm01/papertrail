@@ -1,25 +1,39 @@
 import { Router } from 'express';
 
+import * as authController from '@/controllers/auth.controller.js';
+import { validateBody } from '@/middlewares/validate.js';
+
 const authRouter = Router();
 
 /**
  * @openapi
  * auth/sign-up:
  *  post:
- *      summary: Sign up
+ *      summary: Sign user up
  *      tags: [Auth]
  *      description: Sign up endpoint
+ *      requestBody:
+ *          required: true,
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      type: object
+ *                      properties:
+ *                          email:
+ *                              type: string
+ *                          password:
+ *                              type: string
  *      responses:
  *          200:
  *              description: Returns OK
  */
-authRouter.post('/sign-up', (req, res) => res.send({ message: 'Sign up' }));
+authRouter.post('/sign-up', validateBody(authController.SignUpRequest), authController.signUp);
 
 /**
  * @openapi
  * auth/sign-in:
  *  post:
- *      summary: Sign in
+ *      summary: Sign user in
  *      tags: [Auth]
  *      description: Sign in endpoint
  *      responses:
