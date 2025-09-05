@@ -9,7 +9,7 @@ import { z } from 'zod';
 import type { ApiResponseBody } from '@/lib/types/apiResponseBody.js';
 import { userTable } from '@/data/schema/user.schema.js';
 import { eq } from 'drizzle-orm';
-import type { User } from '@/data/entity.type.js';
+import type { UserInsert } from '@/data/entity.type.js';
 
 export const SignUpRequest = z.object({
   email: z.email().nonempty(),
@@ -23,13 +23,6 @@ export const signUp: RequestHandler<object, ApiResponseBody<{ token: string } | 
   res
 ) => {
   try {
-    // get request body -> email and password
-    // validate request body
-    // salt the password and hash it
-    // save user record to the db
-    // create JWT token
-    // response with JWT token
-
     const { email, password } = req.body;
     const isEmailRegistered = (await db.$count(userTable, eq(userTable.email, email))) > 0;
 
@@ -39,7 +32,7 @@ export const signUp: RequestHandler<object, ApiResponseBody<{ token: string } | 
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newUser: User = {
+    const newUser: UserInsert = {
       email: email,
       password: hashedPassword,
       createdAt: new Date(),
@@ -52,7 +45,7 @@ export const signUp: RequestHandler<object, ApiResponseBody<{ token: string } | 
       success: true,
       message: 'User registered successfully',
       data: {
-        token: 'token placehodler',
+        token: 'token placeholder',
       },
     });
   } catch (err) {
