@@ -9,7 +9,9 @@ import { z } from 'zod';
 import type { ApiResponseBody } from '@/lib/types/apiResponseBody.js';
 import { userTable } from '@/data/schema/user.schema.js';
 import { eq } from 'drizzle-orm';
-import type { UserInsert } from '@/data/entity.type.js';
+import type { User, UserInsert } from '@/data/entity.type.js';
+
+import jwt from 'jsonwebtoken';
 
 export const SignUpRequest = z.object({
   email: z.email().nonempty(),
@@ -18,10 +20,7 @@ export const SignUpRequest = z.object({
 
 type SignUpRequest = z.infer<typeof SignUpRequest>;
 
-export const signUp: RequestHandler<object, ApiResponseBody<{ token: string } | undefined>, SignUpRequest> = async (
-  req,
-  res
-) => {
+export const signUp: RequestHandler<object, ApiResponseBody<any | undefined>, SignUpRequest> = async (req, res) => {
   try {
     const { email, password } = req.body;
     const isEmailRegistered = (await db.$count(userTable, eq(userTable.email, email))) > 0;
@@ -30,7 +29,7 @@ export const signUp: RequestHandler<object, ApiResponseBody<{ token: string } | 
       return res.status(StatusCodes.BAD_REQUEST).json({ success: false, message: 'Email address is already in use.' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10); // use Argon2id instead
 
     const newUser: UserInsert = {
       email: email,
@@ -39,15 +38,33 @@ export const signUp: RequestHandler<object, ApiResponseBody<{ token: string } | 
       updatedAt: null,
     };
 
-    await db.insert(userTable).values(newUser);
+    const insertedUsers = await db.insert(userTable).values(newUser).returning();
+    const savedUser: User | undefined = insertedUsers[0];
 
-    res.status(StatusCodes.OK).json({
-      success: true,
-      message: 'User registered successfully',
-      data: {
-        token: 'token placeholder',
-      },
+    if (!savedUser) {
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Failed to create user.' });
+    }
+
+    const accessToken: string = jwt.sign({ email: savedUser.email, id: savedUser.id }, 'secret') as string; // secret is placeholder atm
+
+    // res.status(StatusCodes.OK).json({
+    //   success: true,
+    //   message: 'User registered successfully',
+    //   data: {
+    //     token: accessToken,
+    //   },
+    // });
+
+    res.status(StatusCodes.OK);
+
+    res.cookie('token', accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      //   maxAge:
     });
+
+    res.json({ message: 'User registered', success: true });
   } catch (err) {
     console.log(err);
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).send();
