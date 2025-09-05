@@ -60,7 +60,7 @@ export const signUp: RequestHandler<object, ApiResponseBody<any | undefined>, Si
     res.cookie('token', accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'strict', // lax ?
       //   maxAge:
     });
 
