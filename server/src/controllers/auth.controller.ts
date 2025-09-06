@@ -1,8 +1,7 @@
-import db from '@/data/db.js';
 import type { RequestHandler } from 'express';
 
 import { StatusCodes } from 'http-status-codes';
-
+import jwt from 'jsonwebtoken';
 import * as bcrypt from 'bcrypt';
 
 import { z } from 'zod';
@@ -11,7 +10,8 @@ import { userTable } from '@/data/schema/user.schema.js';
 import { eq } from 'drizzle-orm';
 import type { User, UserInsert } from '@/data/entity.type.js';
 
-import jwt from 'jsonwebtoken';
+import db from '@/data/db.js';
+import { ACCESS_TOKEN_KEY } from '@/config/env.js';
 
 export const SignUpRequest = z.object({
   email: z.email().nonempty(),
@@ -45,26 +45,31 @@ export const signUp: RequestHandler<object, ApiResponseBody<any | undefined>, Si
       return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Failed to create user.' });
     }
 
-    const accessToken: string = jwt.sign({ email: savedUser.email, id: savedUser.id }, 'secret') as string; // secret is placeholder atm
+    const now = Math.floor(new Date().getTime() / 1000);
+    const sessionId = 'sessionId'; // -> placeholder
 
-    // res.status(StatusCodes.OK).json({
-    //   success: true,
-    //   message: 'User registered successfully',
-    //   data: {
-    //     token: accessToken,
-    //   },
-    // });
+    const accessToken: string = jwt.sign(
+      {
+        sub: savedUser.id,
+        iss: 'papertrailApi',
+        exp: now + 10 * 60,
+        iat: now,
+        sid: sessionId,
+      },
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      ACCESS_TOKEN_KEY!,
+      { algorithm: 'HS256' }
+    ) as string;
 
-    res.status(StatusCodes.OK);
-
-    res.cookie('token', accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict', // lax ?
-      //   maxAge:
-    });
-
-    res.json({ message: 'User registered', success: true });
+    res
+      .status(StatusCodes.OK)
+      .cookie('token', accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: expiration,
+      })
+      .json({ message: 'User registered', success: true });
   } catch (err) {
     console.log(err);
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).send();
