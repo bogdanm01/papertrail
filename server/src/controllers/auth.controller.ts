@@ -46,12 +46,12 @@ export const signUp: RequestHandler<object, ApiResponseBody<any | undefined>, Si
     }
 
     const now = Math.floor(new Date().getTime() / 1000);
-    const sessionId = 'sessionId'; // -> placeholder
+    const sessionId = 'sessionId';
 
     const accessToken: string = jwt.sign(
       {
         sub: savedUser.id,
-        iss: 'papertrailApi',
+        iss: 'papertrailApi/auth/sign-up',
         exp: now + 10 * 60,
         iat: now,
         sid: sessionId,
@@ -59,7 +59,7 @@ export const signUp: RequestHandler<object, ApiResponseBody<any | undefined>, Si
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       ACCESS_TOKEN_KEY!,
       { algorithm: 'HS256' }
-    ) as string;
+    );
 
     res
       .status(StatusCodes.OK)
@@ -67,7 +67,7 @@ export const signUp: RequestHandler<object, ApiResponseBody<any | undefined>, Si
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: expiration,
+        maxAge: now + 10 * 60,
       })
       .json({ message: 'User registered', success: true });
   } catch (err) {
