@@ -1,0 +1,16 @@
+node_modules
+dist
+.git
+.gitignore
+.idea
+.vscode
+*.log
+.env*
+.nvmrc
+.prettierignore
+.prettierrc
+dockerfile
+dockercompose.yml
+coverage
+.nyc_output
+README.md
