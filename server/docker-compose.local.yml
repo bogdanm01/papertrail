@@ -1,0 +1,12 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: local.dockerfile
+    volumes:
+      - .:/app:delegated
+      - /app/node_modules
+    ports:
+      - '5500:5500'
+    env_file:
+      - ./.env.development.local
