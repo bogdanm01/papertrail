@@ -12,6 +12,7 @@ import type { User, UserInsert } from '@/data/entity.type.js';
 
 import db from '@/data/db.js';
 import { ACCESS_TOKEN_KEY } from '@/config/env.js';
+import redisClient from '@/data/redisClient.js';
 
 export const SignUpRequest = z.object({
   email: z.email().nonempty(),
@@ -46,7 +47,18 @@ export const signUp: RequestHandler<object, ApiResponseBody<any | undefined>, Si
     }
 
     const now = Math.floor(new Date().getTime() / 1000);
-    const sessionId = 'sessionId';
+    const sessionId = crypto.randomUUID();
+    const refreshJti = crypto.randomUUID();
+
+    await redisClient.set(
+      sessionId,
+      JSON.stringify({
+        user: savedUser.id,
+        status: 'active',
+        refreshTokenJti: refreshJti,
+        createdAt: new Date(),
+      })
+    );
 
     const accessToken: string = jwt.sign(
       {
@@ -60,6 +72,10 @@ export const signUp: RequestHandler<object, ApiResponseBody<any | undefined>, Si
       ACCESS_TOKEN_KEY!,
       { algorithm: 'HS256' }
     );
+
+    const refreshToken = jwt.sign({ jti: refreshJti, sid: sessionId, exp: now + 7 * 24 * 60 * 60 }, 'smth', {
+      algorithm: 'HS256',
+    });
 
     res
       .status(StatusCodes.OK)
