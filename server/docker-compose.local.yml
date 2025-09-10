@@ -10,14 +10,33 @@ services:
       - '5500:5500'
     env_file:
       - ./.env.development.local
+    networks:
+      - app-network
 
   redis:
     image: redis:latest
-    ports:
-      - '6380:6380'
     restart: always
     volumes:
       - redis_data:/data
+    networks:
+    - app-network
+
+  redis-insight:
+    image: redislabs/redisinsight:latest
+    container_name: redis_insight
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    environment:
+      - RIPORT=8001
+    depends_on:
+      - redis
+    networks:
+      - app-network
 
 volumes:
  redis_data:
+
+networks:
+  app-network:
+    driver: bridge
