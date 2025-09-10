@@ -4,7 +4,7 @@ import { apiReference } from '@scalar/express-api-reference';
 import express from 'express';
 import swaggerJSDoc from 'swagger-jsdoc';
 
-import { PORT } from './config/env.js';
+import env from './config/env.js';
 import { baseOpenapiSpec } from './config/swagger.js';
 import noteRouter from './routes/notes.routes.js';
 import authRouter from './routes/auth.routes.js';
@@ -30,8 +30,8 @@ app.use(
   })
 );
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT?.toString()}`);
+app.listen(env.PORT, () => {
+  console.log(`Server running on http://localhost:${env.PORT}`);
 });
 
 export default app;
