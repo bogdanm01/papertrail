@@ -1,7 +1,9 @@
-import db from '@/data/db.js';
-import type { Note } from '@/data/entity.type.js';
-import { noteTable } from '@/data/schema/note.schema.js';
 import { type RequestHandler } from 'express';
+
+import type { Note } from '@/data/entity.type.js';
+
+import db from '@/data/db.js';
+import { noteTable } from '@/data/schema/note.schema.js';
 
 export const getAllNotes: RequestHandler = async (req, res) => {
   const notes: Note[] = await db.select().from(noteTable);

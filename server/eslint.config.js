@@ -13,6 +13,7 @@ export default [
   eslint.configs.recommended,
   ...tseslint.configs.strictTypeChecked,
   ...tseslint.configs.stylisticTypeChecked,
+  perfectionist.configs['recommended-natural'],
   {
     files: ['**/*.ts'],
     languageOptions: {
@@ -25,6 +26,7 @@ export default [
     rules: {
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-unsafe-assignment': 'warn',
+      'perfectionist/sort-objects': 'off',
     },
   },
 ];

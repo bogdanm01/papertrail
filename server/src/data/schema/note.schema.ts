@@ -1,4 +1,5 @@
-import { pgTable, text, varchar, uuid, type AnyPgColumn } from 'drizzle-orm/pg-core';
+import { type AnyPgColumn, pgTable, text, uuid, varchar } from 'drizzle-orm/pg-core';
+
 import { timestamps } from './timestamps.js';
 import { userTable } from './user.schema.js';
 

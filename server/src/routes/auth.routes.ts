@@ -27,7 +27,7 @@ const authRouter = Router();
  *          200:
  *              description: Returns OK
  */
-authRouter.post('/sign-up', validateBody(authController.SignUpRequest), authController.signUp);
+authRouter.post('/sign-up', validateBody(authController.SignUpSchema), authController.signUp);
 
 /**
  * @openapi
