@@ -4,13 +4,12 @@
   "description": "",
   "type": "module",
   "scripts": {
-    "dev": "tsx --watch src/server.ts",
+    "dev": "NODE_ENV=development tsx --watch src/server.ts",
     "type-check": "tsc --project tsconfig.json --noEmit",
     "clean": "rimraf dist",
     "build": "npm run clean && tsc --project tsconfig.build.json",
-    "drizzle:push": "npm run build && drizzle-kit push:pg",
-    "drizzle:generate": "npm run build && drizzle-kit generate",
-    "drizzle:studio": "npm run build && drizzle-kit studio",
+    "drizzle:push:dev": "NODE_ENV=development npm run build && drizzle-kit push:pg",
+    "drizzle:generate:dev": "NODE_ENV=development npm run build && drizzle-kit generate",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

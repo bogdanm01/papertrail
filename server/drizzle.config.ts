@@ -1,6 +1,8 @@
+import { configDotenv } from 'dotenv';
 import { defineConfig } from 'drizzle-kit';
 
-import env from '@/config/env.js';
+const nodeEnv = process.env.NODE_ENV ?? 'development';
+configDotenv({ path: `.env.${nodeEnv}.local` });
 
 export default defineConfig({
   out: './src/data/migrations',
@@ -9,6 +11,7 @@ export default defineConfig({
   verbose: true,
   strict: true,
   dbCredentials: {
-    url: env.DATABASE_URL,
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    url: process.env.DATABASE_URL!,
   },
 });
