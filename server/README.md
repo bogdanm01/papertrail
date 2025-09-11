@@ -1,25 +1,37 @@
-### Running the server with docker compose
+## Running the Server
 
-```
+Start the server using Docker Compose:
+
+```bash
 docker compose -f docker-compose.local.yml up --build -d
 ```
 
-### Executing drizzle commands
+This will build the images (if needed) and run the containers in the background.  
 
-#### Push schema directly to the database
+---
 
-```
-docker compose -f docker-compose.local.yml exec npm run drizzle:push:dev
+## Database & Drizzle ORM
+
+### Push schema directly to the database
+
+```bash
+docker compose -f docker-compose.local.yml exec backend npm run drizzle:push:dev
 ```
 
-#### Generate migrations
+---
 
+### Generate migrations
+
+```bash
+docker compose -f docker-compose.local.yml exec backend npm run drizzle:generate:dev
 ```
-docker compose -f docker-compose.local.yml exec npm run drizzle:generate:dev
-```
+
+---
 
 ### Apply migrations
 
+```bash
+docker compose -f docker-compose.local.yml exec backend npx drizzle-kit migrate
 ```
-docker compose -f docker-compose.local.yml exec npx drizzle-kit migrate
-```
+
+--- 
