@@ -1,25 +1,28 @@
 import type { RequestHandler } from 'express';
 
+import * as bcrypt from 'bcrypt';
+import { eq } from 'drizzle-orm';
 import { StatusCodes } from 'http-status-codes';
 import jwt from 'jsonwebtoken';
-import * as bcrypt from 'bcrypt';
-
 import { z } from 'zod';
-import type { ApiResponseBody } from '@/lib/types/apiResponseBody.js';
-import { userTable } from '@/data/schema/user.schema.js';
-import { eq } from 'drizzle-orm';
+
 import type { User, UserInsert } from '@/data/entity.type.js';
+import type { ApiResponseBody } from '@/lib/types/apiResponseBody.js';
 
+import envs from '@/config/env.js';
 import db from '@/data/db.js';
-import { ACCESS_TOKEN_KEY } from '@/config/env.js';
 import redisClient from '@/data/redisClient.js';
+import { userTable } from '@/data/schema/user.schema.js';
 
-export const SignUpRequest = z.object({
+export const SignUpSchema = z.object({
   email: z.email().nonempty(),
   password: z.string().min(8).nonempty(),
 });
 
-type SignUpRequest = z.infer<typeof SignUpRequest>;
+type SignUpRequest = z.infer<typeof SignUpSchema>;
+
+const ACCESS_TTL_SEC = 10 * 60;
+const REFRESH_TTL_SEC = 10 * 24 * 60 * 60;
 
 export const signUp: RequestHandler<object, ApiResponseBody<any | undefined>, SignUpRequest> = async (req, res) => {
   try {
@@ -27,7 +30,10 @@ export const signUp: RequestHandler<object, ApiResponseBody<any | undefined>, Si
     const isEmailRegistered = (await db.$count(userTable, eq(userTable.email, email))) > 0;
 
     if (isEmailRegistered) {
-      return res.status(StatusCodes.BAD_REQUEST).json({ success: false, message: 'Email address is already in use.' });
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message: 'Email address is already in use.',
+      });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10); // use Argon2id instead
@@ -39,14 +45,17 @@ export const signUp: RequestHandler<object, ApiResponseBody<any | undefined>, Si
       updatedAt: null,
     };
 
-    const insertedUsers = await db.insert(userTable).values(newUser).returning();
-    const savedUser: User | undefined = insertedUsers[0];
+    const inserted = await db.insert(userTable).values(newUser).returning();
+    const savedUser: undefined | User = inserted[0];
 
     if (!savedUser) {
-      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Failed to create user.' });
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: 'Failed to create user.',
+      });
     }
 
-    const now = Math.floor(new Date().getTime() / 1000);
+    const nowSec = Math.floor(new Date().getTime() / 1000);
     const sessionId = crypto.randomUUID();
     const refreshJti = crypto.randomUUID();
 
@@ -56,34 +65,56 @@ export const signUp: RequestHandler<object, ApiResponseBody<any | undefined>, Si
         user: savedUser.id,
         status: 'active',
         refreshTokenJti: refreshJti,
-        createdAt: new Date(),
-      })
+        createdAt: new Date().toISOString(),
+      }),
+      {
+        expiration: {
+          type: 'EX',
+          value: REFRESH_TTL_SEC,
+        },
+      }
     );
 
     const accessToken: string = jwt.sign(
       {
         sub: savedUser.id,
-        iss: 'papertrailApi/auth/sign-up',
-        exp: now + 10 * 60,
-        iat: now,
+        iss: 'papertrail-api',
+        exp: nowSec + ACCESS_TTL_SEC,
+        iat: nowSec,
         sid: sessionId,
       },
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      ACCESS_TOKEN_KEY!,
+      envs.ACCESS_TOKEN_KEY,
       { algorithm: 'HS256' }
     );
 
-    const refreshToken = jwt.sign({ jti: refreshJti, sid: sessionId, exp: now + 7 * 24 * 60 * 60 }, 'smth', {
-      algorithm: 'HS256',
-    });
+    const refreshToken = jwt.sign(
+      {
+        sub: savedUser.id,
+        iss: 'papertrail-api',
+        exp: nowSec + REFRESH_TTL_SEC,
+        iat: nowSec,
+        jti: refreshJti,
+        sid: sessionId,
+      },
+      envs.REFRESH_TOKEN_KEY,
+      {
+        algorithm: 'HS256',
+      }
+    );
 
     res
-      .status(StatusCodes.OK)
+      .status(StatusCodes.CREATED)
       .cookie('token', accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: now + 10 * 60,
+        maxAge: ACCESS_TTL_SEC * 1000,
+      })
+      .cookie('refresh', refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: REFRESH_TTL_SEC * 1000,
       })
       .json({ message: 'User registered', success: true });
   } catch (err) {
