@@ -1,5 +1,7 @@
 import { type Options } from 'swagger-jsdoc';
 
+import { authApiSpec } from '@/routes/auth/auth.apispec.js';
+
 export const baseOpenapiSpec: Options = {
   apis: ['src/routes/*.ts', 'src/openapi/**/*.yaml'],
   definition: {
@@ -10,5 +12,6 @@ export const baseOpenapiSpec: Options = {
       { name: 'Auth', description: 'Authentication endpoints' },
       { name: 'Note', description: 'Note endpoints' },
     ],
+    paths: { ...authApiSpec },
   },
 };

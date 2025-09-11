@@ -6,8 +6,8 @@ import swaggerJSDoc from 'swagger-jsdoc';
 
 import env from './config/env.js';
 import { baseOpenapiSpec } from './config/swagger.js';
-import authRouter from './routes/auth.routes.js';
-import noteRouter from './routes/notes.routes.js';
+import authRouter from './routes/auth/auth.routes.js';
+import noteRouter from './routes/notes/notes.routes.js';
 
 const app = express();
 
