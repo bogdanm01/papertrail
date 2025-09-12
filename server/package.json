@@ -8,7 +8,7 @@
     "type-check": "tsc --project tsconfig.json --noEmit",
     "clean": "rimraf dist",
     "build": "npm run clean && tsc --project tsconfig.build.json",
-    "drizzle:push:dev": "NODE_ENV=development npm run build && drizzle-kit push:pg",
+    "drizzle:push:dev": "NODE_ENV=development npm run build && drizzle-kit push",
     "drizzle:generate:dev": "NODE_ENV=development npm run build && drizzle-kit generate",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -18,7 +18,7 @@
   "dependencies": {
     "@scalar/express-api-reference": "^0.8.16",
     "argon2": "^0.44.0",
-    "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
     "dotenv": "^17.2.2",
     "drizzle-orm": "^0.44.5",
     "express": "^5.1.0",
@@ -33,6 +33,7 @@
   "devDependencies": {
     "@tsconfig/node22": "^22.0.2",
     "@types/bcrypt": "^6.0.0",
+    "@types/cookie-parser": "^1.4.9",
     "@types/express": "^5.0.3",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.3.0",

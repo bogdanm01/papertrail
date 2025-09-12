@@ -1,6 +1,7 @@
 import type { OpenAPIV3 } from 'openapi-types';
 
 import { apiReference } from '@scalar/express-api-reference';
+import cookieParser from 'cookie-parser';
 import express from 'express';
 import swaggerJSDoc from 'swagger-jsdoc';
 
@@ -13,6 +14,8 @@ const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+app.use(cookieParser());
 
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/notes', noteRouter);
