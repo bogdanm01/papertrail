@@ -1,6 +1,6 @@
-import type { RequestHandler } from 'express';
+import type { CookieOptions, RequestHandler } from 'express';
 
-import * as bcrypt from 'bcrypt';
+import * as argon from 'argon2';
 import { eq } from 'drizzle-orm';
 import { StatusCodes } from 'http-status-codes';
 import jwt from 'jsonwebtoken';
@@ -9,22 +9,58 @@ import { z } from 'zod';
 import type { User, UserInsert } from '@/data/entity.type.js';
 import type { ApiResponseBody } from '@/lib/types/apiResponseBody.js';
 
-import envs from '@/config/env.js';
+import env from '@/config/env.js';
 import db from '@/data/db.js';
 import redisClient from '@/data/redisClient.js';
 import { userTable } from '@/data/schema/user.schema.js';
+
+interface Session {
+  user: string;
+  refreshTokenJti: string;
+  createdAt: string;
+  updatedAt: null | string;
+}
 
 export const SignUpSchema = z.object({
   email: z.email().nonempty(),
   password: z.string().min(8).nonempty(),
 });
 
+export const SignInSchema = z.object({
+  email: z.email().nonempty(),
+  password: z.string().nonempty(),
+});
+
+type SignInRequest = z.infer<typeof SignInSchema>;
 type SignUpRequest = z.infer<typeof SignUpSchema>;
 
 const ACCESS_TTL_SEC = 10 * 60;
 const REFRESH_TTL_SEC = 10 * 24 * 60 * 60;
+const DEFAULT_TOKEN_ISSUER = 'papertrail-api';
+const ACCESS_TOKEN_NAME = 'papertrail_access';
+const REFRESH_TOKEN_NAME = 'papertrail_refresh';
 
-export const signUp: RequestHandler<object, ApiResponseBody<any | undefined>, SignUpRequest> = async (req, res) => {
+// TODO: Move to util
+const createJWT = (
+  claims: {
+    exp: number;
+    iat: number;
+    iss?: string;
+    jti?: string;
+    sid: string;
+    sub: string;
+  },
+  options: {
+    algorithm?: jwt.Algorithm;
+    key: string;
+  }
+): string => {
+  return jwt.sign({ ...claims, iss: claims.iss ?? DEFAULT_TOKEN_ISSUER }, options.key, {
+    algorithm: options.algorithm ?? 'HS256',
+  });
+};
+
+export const signUp: RequestHandler<object, ApiResponseBody<undefined>, SignUpRequest> = async (req, res) => {
   try {
     const { email, password } = req.body;
     const isEmailRegistered = (await db.$count(userTable, eq(userTable.email, email))) > 0;
@@ -36,7 +72,7 @@ export const signUp: RequestHandler<object, ApiResponseBody<any | undefined>, Si
       });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10); // use Argon2id instead
+    const hashedPassword = await argon.hash(password, { type: argon.argon2id });
 
     const newUser: UserInsert = {
       email: email,
@@ -59,58 +95,46 @@ export const signUp: RequestHandler<object, ApiResponseBody<any | undefined>, Si
     const sessionId = crypto.randomUUID();
     const refreshJti = crypto.randomUUID();
 
-    await redisClient.set(
-      sessionId,
-      JSON.stringify({
-        user: savedUser.id,
-        status: 'active',
-        refreshTokenJti: refreshJti,
-        createdAt: new Date().toISOString(),
-      }),
-      {
-        expiration: {
-          type: 'EX',
-          value: REFRESH_TTL_SEC,
-        },
-      }
-    );
+    const sessionObj: Session = {
+      user: savedUser.id,
+      refreshTokenJti: refreshJti,
+      createdAt: new Date().toISOString(),
+      updatedAt: null,
+    };
 
-    const accessToken: string = jwt.sign(
-      {
-        sub: savedUser.id,
-        iss: 'papertrail-api',
-        exp: nowSec + ACCESS_TTL_SEC,
-        iat: nowSec,
-        sid: sessionId,
+    await redisClient.set(sessionId, JSON.stringify(sessionObj), {
+      expiration: {
+        type: 'EX',
+        value: REFRESH_TTL_SEC,
       },
-      envs.ACCESS_TOKEN_KEY,
-      { algorithm: 'HS256' }
+    });
+
+    const accessToken = createJWT(
+      { sub: savedUser.id, exp: nowSec + ACCESS_TTL_SEC, iat: nowSec, sid: sessionId },
+      { key: env.ACCESS_TOKEN_KEY }
     );
 
-    const refreshToken = jwt.sign(
+    const refreshToken = createJWT(
       {
         sub: savedUser.id,
-        iss: 'papertrail-api',
         exp: nowSec + REFRESH_TTL_SEC,
         iat: nowSec,
-        jti: refreshJti,
         sid: sessionId,
+        jti: refreshJti,
       },
-      envs.REFRESH_TOKEN_KEY,
-      {
-        algorithm: 'HS256',
-      }
+      { key: env.ACCESS_TOKEN_KEY }
     );
 
+    // TODO: Add email verification flow
     res
       .status(StatusCodes.CREATED)
-      .cookie('token', accessToken, {
+      .cookie(ACCESS_TOKEN_NAME, accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         maxAge: ACCESS_TTL_SEC * 1000,
       })
-      .cookie('refresh', refreshToken, {
+      .cookie(REFRESH_TOKEN_NAME, refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
@@ -118,7 +142,121 @@ export const signUp: RequestHandler<object, ApiResponseBody<any | undefined>, Si
       })
       .json({ message: 'User registered', success: true });
   } catch (err) {
-    console.log(err);
+    console.log('signUp error', err);
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).send();
+  }
+};
+
+export const signIn: RequestHandler<object, ApiResponseBody<undefined>, SignInRequest> = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const user: undefined | User = await db.query.userTable.findFirst({
+      where: eq(userTable.email, email),
+    });
+
+    if (!user) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message: 'Incorrect user credentials.',
+      });
+    }
+
+    const passwordMatches: boolean = await argon.verify(user.password, password);
+
+    if (!passwordMatches) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message: 'Incorrect user credentials.',
+      });
+    }
+
+    // TODO: Consider session number limit
+    const sessionId = crypto.randomUUID();
+    const refreshTokenJti = crypto.randomUUID();
+    const nowSec = Math.floor(new Date().getTime() / 1000);
+
+    const sessionObj: Session = {
+      user: user.id,
+      refreshTokenJti: refreshTokenJti,
+      createdAt: new Date().toISOString(),
+      updatedAt: null,
+    };
+
+    await redisClient.set(sessionId, JSON.stringify(sessionObj), {
+      expiration: {
+        type: 'EX',
+        value: REFRESH_TTL_SEC,
+      },
+    });
+
+    const accessToken = createJWT(
+      { sub: user.id, exp: nowSec + ACCESS_TTL_SEC, iat: nowSec, sid: sessionId },
+      { key: env.ACCESS_TOKEN_KEY }
+    );
+
+    const refreshToken = createJWT(
+      {
+        sub: user.id,
+        exp: nowSec + REFRESH_TTL_SEC,
+        iat: nowSec,
+        sid: sessionId,
+        jti: refreshTokenJti,
+      },
+      { key: env.ACCESS_TOKEN_KEY }
+    );
+
+    res
+      .status(StatusCodes.OK)
+      .cookie(ACCESS_TOKEN_NAME, accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: ACCESS_TTL_SEC * 1000,
+      })
+      .cookie(REFRESH_TOKEN_NAME, refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: REFRESH_TTL_SEC * 1000,
+      })
+      .json({ success: true, message: 'OK' });
+  } catch (err) {
+    console.log('signIn error', err);
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).send();
+  }
+};
+
+export const signOut: RequestHandler = async (req, res) => {
+  const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 0,
+  };
+
+  try {
+    const { token } = req.cookies as { token: string };
+
+    if (token) {
+      const decoded = jwt.decode(token, { json: true });
+      const sid = decoded?.sid as string;
+
+      if (sid) {
+        await redisClient.del(sid);
+      }
+    }
+
+    res.clearCookie(ACCESS_TOKEN_NAME, cookieOptions as CookieOptions);
+    res.clearCookie(REFRESH_TOKEN_NAME, cookieOptions as CookieOptions);
+
+    res.status(StatusCodes.NO_CONTENT).send();
+  } catch (err) {
+    console.log('signOut error', err);
+
+    res.clearCookie(ACCESS_TOKEN_NAME, cookieOptions as CookieOptions);
+    res.clearCookie(REFRESH_TOKEN_NAME, cookieOptions as CookieOptions);
+
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Internal error' });
   }
 };

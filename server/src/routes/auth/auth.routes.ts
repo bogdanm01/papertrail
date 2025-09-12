@@ -7,8 +7,9 @@ const authRouter = Router();
 
 authRouter.post('/sign-up', validateBody(authController.SignUpSchema), authController.signUp);
 
-authRouter.post('/sign-in', (req, res) => res.send({ message: 'Sign in' }));
+authRouter.post('/sign-in', validateBody(authController.SignInSchema), authController.signIn);
 
-authRouter.post('/sign-out', (req, res) => res.send({ message: 'Sign out' }));
+// authenticated endpoint, get user from cookie
+authRouter.post('/sign-out', authController.signOut);
 
 export default authRouter;
