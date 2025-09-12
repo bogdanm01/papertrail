@@ -1,6 +1,8 @@
 import { createClient } from 'redis';
 
-const redisClient = await createClient({ url: 'redis://default@redis:6379' })
+import env from '@/config/env.js';
+
+const redisClient = await createClient({ url: env.REDIS_URL })
   .on('error', err => {
     console.log('Redis Client Error', err);
   })

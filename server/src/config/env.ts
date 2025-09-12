@@ -9,6 +9,7 @@ const schema = z.object({
   PORT: z.string().default('3000'),
   ACCESS_TOKEN_KEY: z.string(),
   REFRESH_TOKEN_KEY: z.string(),
+  REDIS_URL: z.string(),
 });
 
 const env = schema.parse(process.env);
