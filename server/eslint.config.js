@@ -27,6 +27,7 @@ export default [
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-unsafe-assignment': 'warn',
       'perfectionist/sort-objects': 'off',
+      'perfectionist/sort-interfaces': 'off',
     },
   },
 ];
