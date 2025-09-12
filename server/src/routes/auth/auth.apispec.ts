@@ -1,4 +1,4 @@
-import { SignUpSchema } from '@/controllers/auth.controller.js';
+import { SignInSchema, SignUpSchema } from '@/controllers/auth.controller.js';
 import { requiredJSONBody } from '@/lib/utils.js';
 
 export const authApiSpec = {
@@ -18,8 +18,29 @@ export const authApiSpec = {
       summary: 'Sign user in',
       tags: ['Auth'],
       description: 'Sign in endpoint',
+      requestBody: requiredJSONBody(SignInSchema),
       responses: {
         ...response('200', 'Returns 200 OK'),
+      },
+    },
+  },
+  'auth/sign-out': {
+    post: {
+      summary: 'Sign user out',
+      tags: ['Auth'],
+      description: 'Sign out endpoint',
+      parameters: [
+        {
+          name: 'token',
+          in: 'cookie',
+          required: true,
+          schema: { type: 'string' },
+          description: 'Access token stored in httpOnly cookie',
+        },
+      ],
+      responses: {
+        ...response('204', 'Returns 204 No Content'),
+        ...response('500', 'Returns 500 Internal Server Error'),
       },
     },
   },
