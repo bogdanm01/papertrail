@@ -14,6 +14,17 @@ import db from '@/data/db.js';
 import redisClient from '@/data/redisClient.js';
 import { userTable } from '@/data/schema/user.schema.js';
 
+const ACCESS_TTL_SEC = 10 * 60;
+const REFRESH_TTL_SEC = 10 * 24 * 60 * 60;
+const DEFAULT_TOKEN_ISSUER = 'papertrail-api';
+const ACCESS_TOKEN_NAME = 'papertrail_access';
+const REFRESH_TOKEN_NAME = 'papertrail_refresh';
+
+interface AuthCookies {
+  [ACCESS_TOKEN_NAME]?: string;
+  [REFRESH_TOKEN_NAME]?: string;
+}
+
 interface Session {
   user: string;
   refreshTokenJti: string;
@@ -33,12 +44,6 @@ export const SignInSchema = z.object({
 
 type SignInRequest = z.infer<typeof SignInSchema>;
 type SignUpRequest = z.infer<typeof SignUpSchema>;
-
-const ACCESS_TTL_SEC = 10 * 60;
-const REFRESH_TTL_SEC = 10 * 24 * 60 * 60;
-const DEFAULT_TOKEN_ISSUER = 'papertrail-api';
-const ACCESS_TOKEN_NAME = 'papertrail_access';
-const REFRESH_TOKEN_NAME = 'papertrail_refresh';
 
 // TODO: Move to util
 const createJWT = (
@@ -138,6 +143,7 @@ export const signUp: RequestHandler<object, ApiResponseBody<undefined>, SignUpRe
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
+        path: 'auth/refresh',
         maxAge: REFRESH_TTL_SEC * 1000,
       })
       .json({ message: 'User registered', success: true });
@@ -218,6 +224,7 @@ export const signIn: RequestHandler<object, ApiResponseBody<undefined>, SignInRe
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
+        path: 'auth/refresh',
         maxAge: REFRESH_TTL_SEC * 1000,
       })
       .json({ success: true, message: 'OK' });
@@ -227,7 +234,7 @@ export const signIn: RequestHandler<object, ApiResponseBody<undefined>, SignInRe
   }
 };
 
-export const signOut: RequestHandler = async (req, res) => {
+export const signOut: RequestHandler = async (req: Express.Request & { cookies: AuthCookies }, res) => {
   const cookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -236,7 +243,7 @@ export const signOut: RequestHandler = async (req, res) => {
   };
 
   try {
-    const { token } = req.cookies as { token: string };
+    const token: string | undefined = req.cookies[ACCESS_TOKEN_NAME];
 
     if (token) {
       const decoded = jwt.decode(token, { json: true });
