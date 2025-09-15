@@ -137,13 +137,14 @@ export const signUp: RequestHandler<object, ApiResponseBody<undefined>, SignUpRe
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
+        path: '/api',
         maxAge: ACCESS_TTL_SEC * 1000,
       })
       .cookie(REFRESH_TOKEN_NAME, refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        path: 'auth/refresh',
+        path: '/api/auth/refresh',
         maxAge: REFRESH_TTL_SEC * 1000,
       })
       .json({ message: 'User registered', success: true });
@@ -218,13 +219,14 @@ export const signIn: RequestHandler<object, ApiResponseBody<undefined>, SignInRe
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
+        path: '/api',
         maxAge: ACCESS_TTL_SEC * 1000,
       })
       .cookie(REFRESH_TOKEN_NAME, refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        path: 'auth/refresh',
+        path: '/api/auth/refresh',
         maxAge: REFRESH_TTL_SEC * 1000,
       })
       .json({ success: true, message: 'OK' });
