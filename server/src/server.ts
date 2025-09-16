@@ -6,7 +6,7 @@ import express from 'express';
 import swaggerJSDoc from 'swagger-jsdoc';
 
 import env from './config/env.js';
-import { baseOpenapiSpec } from './config/swagger.js';
+import { baseOpenapiSpec } from './config/openApiSpec.js';
 import authRouter from './routes/auth/auth.routes.js';
 import noteRouter from './routes/notes/notes.routes.js';
 
