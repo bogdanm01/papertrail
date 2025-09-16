@@ -1,5 +1,6 @@
-import { SignInSchema, SignUpSchema } from '@/controllers/auth.controller.js';
 import { requiredJSONBody } from '@/lib/utils.js';
+import { SignInSchema } from '@/lib/zod/signInSchema.js';
+import { SignUpSchema } from '@/lib/zod/signUpSchema.js';
 
 export const authApiSpec = {
   '/auth/sign-up': {

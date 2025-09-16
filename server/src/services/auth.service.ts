@@ -4,15 +4,15 @@ import { StatusCodes } from 'http-status-codes';
 import jwt from 'jsonwebtoken';
 
 import type { User, UserInsert } from '@/data/entity.type.js';
-import type { ApiResponse } from '@/lib/types/apiResponse.js';
+import type { ApiResponse } from '@/lib/interfaces/apiResponse.js';
 
 import env from '@/config/env.js';
 import db from '@/data/db.js';
 import redisClient from '@/data/redisClient.js';
 import { userTable } from '@/data/schema/user.schema.js';
 import { createJWT } from '@/lib/utils.js';
-import type { Session } from '@/lib/types/session.js';
-import type { AuthCookies } from '@/lib/types/authCookies.js';
+import type { Session } from '@/lib/interfaces/session.js';
+import type { AuthCookies } from '@/lib/interfaces/authCookies.js';
 
 const ACCESS_TTL_SEC = 10 * 60;
 const REFRESH_TTL_SEC = 10 * 24 * 60 * 60;

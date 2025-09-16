@@ -1,8 +1,12 @@
 import { Router } from 'express';
 
-import AuthController, { SignInSchema, SignUpSchema } from '@/controllers/auth.controller.js';
+import AuthController from '@/controllers/auth.controller.js';
+
 import { validateBody } from '@/middlewares/validate.js';
 import { AuthService } from '@/services/auth.service.js';
+
+import { SignUpSchema } from '@/lib/zod/signUpSchema.js';
+import { SignInSchema } from '@/lib/zod/signInSchema.js';
 
 const authRouter = Router();
 

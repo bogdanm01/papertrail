@@ -3,7 +3,7 @@ import type { ZodObject } from 'zod/v4';
 
 import { z } from 'zod';
 
-import type { ApiResponseBody } from '@/lib/types/apiResponseBody.js';
+import type { ApiResponseBody } from '@/lib/interfaces/apiResponseBody.js';
 
 export const validateBody = (schema: ZodObject): RequestHandler => {
   return (req, res, next) => {
