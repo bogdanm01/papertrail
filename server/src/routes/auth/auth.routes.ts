@@ -1,15 +1,22 @@
 import { Router } from 'express';
 
-import * as authController from '@/controllers/auth.controller.js';
+import AuthController, { SignInSchema, SignUpSchema } from '@/controllers/auth.controller.js';
 import { validateBody } from '@/middlewares/validate.js';
+import { AuthService } from '@/services/auth.service.js';
 
 const authRouter = Router();
 
-authRouter.post('/sign-up', validateBody(authController.SignUpSchema), authController.signUp);
+// TODO: Implement dependency container
+const authService = new AuthService();
+const authController = new AuthController(authService);
 
-authRouter.post('/sign-in', validateBody(authController.SignInSchema), authController.signIn);
+authRouter.post('/sign-up', validateBody(SignUpSchema), (req, res) => authController.signUp(req, res));
 
-// authenticated endpoint, get user from cookie
-authRouter.post('/sign-out', authController.signOut);
+authRouter.post('/sign-in', validateBody(SignInSchema), (req, res) => authController.signIn(req, res));
+
+// TODO: authenticated endpoint, get user from cookie
+authRouter.post('/sign-out', (req, res) => authController.signOut(req, res));
+
+authRouter.post('/refresh', (req, res) => authController.refresh(req, res));
 
 export default authRouter;
