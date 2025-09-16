@@ -31,7 +31,7 @@ export const authApiSpec = {
       description: 'Sign out endpoint',
       parameters: [
         {
-          name: 'token',
+          name: 'papertrail_access',
           in: 'cookie',
           required: true,
           schema: { type: 'string' },
@@ -42,6 +42,29 @@ export const authApiSpec = {
         ...response('204', 'Returns 204 No Content'),
         ...response('500', 'Returns 500 Internal Server Error'),
       },
+    },
+  },
+  'auth/refresh': {
+    post: {
+      summary: 'Get new access token',
+      tags: ['Auth'],
+      description: 'Refresh endpoint',
+      parameters: [
+        {
+          name: 'papertrail_access',
+          in: 'cookie',
+          required: true,
+          schema: { type: 'string' },
+          description: 'Access token stored in httpOnly cookie',
+        },
+        {
+          name: 'papertrail_refresh',
+          in: 'cookie',
+          required: true,
+          schema: { type: 'string' },
+          description: 'Access token stored in httpOnly cookie',
+        },
+      ],
     },
   },
 };
