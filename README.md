@@ -6,7 +6,7 @@ It provides a unified space where individuals and teams can **write, organize, b
 
 ---
 
-## 📌 Planned Features
+## Planned Features
 
 - **Notes & Markdown**
   - Full Markdown support for text editing
@@ -36,7 +36,7 @@ It provides a unified space where individuals and teams can **write, organize, b
 
 ---
 
-## 🛠 Development Overview
+## Development Overview
 
 Papertrail is being developed as a **full-stack web application**, prioritizing scalability, extensibility, and developer experience.
 
@@ -59,7 +59,7 @@ Papertrail is being developed as a **full-stack web application**, prioritizing 
 
 ---
 
-## 📅 Roadmap (WIP)
+## Roadmap (WIP)
 
 - [ ] Core note-taking with Markdown support  
 - [ ] Folder & workspace structure  
