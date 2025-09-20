@@ -24,6 +24,9 @@
     "declaration": false,
 
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedIndexedAccess": true
+    "noUncheckedIndexedAccess": true,
+
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   }
 }

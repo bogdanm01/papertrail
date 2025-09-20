@@ -13,15 +13,18 @@ import { createJWT } from '@/lib/utils.js';
 import type { Session } from '@/lib/interfaces/session.js';
 import type { AuthCookies } from '@/lib/interfaces/authCookies.js';
 import { authConst } from '@/lib/const.js';
+import { autoInjectable } from 'tsyringe';
+import type { RedisClient } from '@/data/redisClient.js';
 
 const ACCESS_TTL_SEC = authConst.ACCESS_TTL_SEC;
 const REFRESH_TTL_SEC = authConst.REFRESH_TTL_SEC;
 const ACCESS_TOKEN_NAME = authConst.ACCESS_TOKEN_NAME;
 
+@autoInjectable()
 export class AuthService {
   constructor(
     private db: DbClient,
-    private redisClient: any
+    private redisClient: RedisClient
   ) {}
 
   async signUp(

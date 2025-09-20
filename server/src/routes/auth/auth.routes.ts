@@ -2,6 +2,8 @@ import { Router } from 'express';
 
 import AuthController from '@/controllers/auth.controller.js';
 
+import { container } from 'tsyringe';
+
 import { validateBody } from '@/middlewares/validate.js';
 import { AuthService } from '@/services/auth.service.js';
 
@@ -10,12 +12,9 @@ import { SignInSchema } from '@/lib/zod/signInSchema.js';
 import type { DbClient } from '@/data/db.js';
 import type { RedisClient } from '@/data/redisClient.js';
 
-const getAuthRoutes = (db: DbClient, redisClient: RedisClient) => {
+const getAuthRoutes = () => {
   const authRouter = Router();
-
-  // TODO: Implement dependency container
-  const authService = new AuthService(db, redisClient);
-  const authController = new AuthController(authService);
+  const authController = container.resolve(AuthController);
 
   authRouter.post('/sign-up', validateBody(SignUpSchema), (req, res) => authController.signUp(req, res));
 

@@ -2,7 +2,6 @@ import type { CookieOptions } from 'express';
 
 import { type Request, type Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import { z } from 'zod';
 
 import type { ApiResponseBody } from '@/lib/interfaces/apiResponseBody.js';
 import type { AuthService } from '@/services/auth.service.js';
@@ -10,12 +9,14 @@ import type { AuthService } from '@/services/auth.service.js';
 import { authConst } from '@/lib/const.js';
 import type { AuthCookies } from '@/lib/interfaces/authCookies.js';
 import type { SignInRequest, SignUpRequest } from '@/lib/zod/types.js';
+import { autoInjectable } from 'tsyringe';
 
 const ACCESS_TTL_SEC = authConst.ACCESS_TTL_SEC;
 const REFRESH_TTL_SEC = authConst.REFRESH_TTL_SEC;
 const ACCESS_TOKEN_NAME = authConst.ACCESS_TOKEN_NAME;
 const REFRESH_TOKEN_NAME = authConst.REFRESH_TOKEN_NAME;
 
+@autoInjectable()
 export default class AuthController {
   private readonly authService: AuthService;
 

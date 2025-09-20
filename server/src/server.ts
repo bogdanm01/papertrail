@@ -1,5 +1,8 @@
 import type { OpenAPIV3 } from 'openapi-types';
 
+import 'reflect-metadata';
+import { container } from 'tsyringe';
+
 import { apiReference } from '@scalar/express-api-reference';
 import cookieParser from 'cookie-parser';
 import express from 'express';
@@ -8,9 +11,9 @@ import swaggerJSDoc from 'swagger-jsdoc';
 import env from './config/env.js';
 import { baseOpenapiSpec } from './config/openApiSpec.js';
 import noteRouter from './routes/notes/notes.routes.js';
-import getDbClient from './data/db.js';
+import getDbClient, { type DbClient } from './data/db.js';
 import getAuthRoutes from './routes/auth/auth.routes.js';
-import getRedisClient from './data/redisClient.js';
+import getRedisClient, { type RedisClient } from './data/redisClient.js';
 
 const app = express();
 
@@ -19,10 +22,10 @@ app.use(express.urlencoded({ extended: false }));
 // eslint-disable-next-line @typescript-eslint/no-unsafe-call
 app.use(cookieParser());
 
-const db = getDbClient();
-const redisClient = getRedisClient();
+container.register<DbClient>('db', { useValue: getDbClient() });
+container.register<RedisClient>('redisClient', { useValue: getRedisClient() });
 
-const authRoutes = getAuthRoutes(db, redisClient);
+const authRoutes = getAuthRoutes();
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/notes', noteRouter);
