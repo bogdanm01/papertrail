@@ -7,8 +7,10 @@ import swaggerJSDoc from 'swagger-jsdoc';
 
 import env from './config/env.js';
 import { baseOpenapiSpec } from './config/openApiSpec.js';
-import authRouter from './routes/auth/auth.routes.js';
 import noteRouter from './routes/notes/notes.routes.js';
+import getDbClient from './data/db.js';
+import getAuthRoutes from './routes/auth/auth.routes.js';
+import getRedisClient from './data/redisClient.js';
 
 const app = express();
 
@@ -17,7 +19,12 @@ app.use(express.urlencoded({ extended: false }));
 // eslint-disable-next-line @typescript-eslint/no-unsafe-call
 app.use(cookieParser());
 
-app.use('/api/v1/auth', authRouter);
+const db = getDbClient();
+const redisClient = getRedisClient();
+
+const authRoutes = getAuthRoutes(db, redisClient);
+
+app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/notes', noteRouter);
 
 const openapiSpec: OpenAPIV3.Document = swaggerJSDoc(baseOpenapiSpec) as OpenAPIV3.Document;

@@ -7,27 +7,29 @@ import type { User, UserInsert } from '@/data/entity.type.js';
 import type { ApiResponse } from '@/lib/interfaces/apiResponse.js';
 
 import env from '@/config/env.js';
-import db from '@/data/db.js';
-import redisClient from '@/data/redisClient.js';
+import { type DbClient } from '@/data/db.js';
 import { userTable } from '@/data/schema/user.schema.js';
 import { createJWT } from '@/lib/utils.js';
 import type { Session } from '@/lib/interfaces/session.js';
 import type { AuthCookies } from '@/lib/interfaces/authCookies.js';
+import { authConst } from '@/lib/const.js';
 
-const ACCESS_TTL_SEC = 10 * 60;
-const REFRESH_TTL_SEC = 10 * 24 * 60 * 60;
-const ACCESS_TOKEN_NAME = 'papertrail_access';
-const REFRESH_TOKEN_NAME = 'papertrail_refresh';
+const ACCESS_TTL_SEC = authConst.ACCESS_TTL_SEC;
+const REFRESH_TTL_SEC = authConst.REFRESH_TTL_SEC;
+const ACCESS_TOKEN_NAME = authConst.ACCESS_TOKEN_NAME;
 
 export class AuthService {
-  //   constructor(private db: NodePgDatabase, private redisClient: any) {}
+  constructor(
+    private db: DbClient,
+    private redisClient: any
+  ) {}
 
   async signUp(
     email: string,
     password: string
   ): Promise<ApiResponse<undefined> & { accessToken?: string; refreshToken?: string }> {
     try {
-      const isEmailRegistered = (await db.$count(userTable, eq(userTable.email, email))) > 0;
+      const isEmailRegistered = (await this.db.$count(userTable, eq(userTable.email, email))) > 0;
 
       if (isEmailRegistered) {
         return {
@@ -48,7 +50,7 @@ export class AuthService {
         updatedAt: null,
       };
 
-      const inserted = await db.insert(userTable).values(newUser).returning();
+      const inserted = await this.db.insert(userTable).values(newUser).returning();
       const savedUser: undefined | User = inserted[0];
 
       if (!savedUser) {
@@ -72,7 +74,7 @@ export class AuthService {
         updatedAt: null,
       };
 
-      await redisClient.set(sessionId, JSON.stringify(sessionObj), {
+      await this.redisClient.set(sessionId, JSON.stringify(sessionObj), {
         expiration: {
           type: 'EX',
           value: REFRESH_TTL_SEC,
@@ -115,7 +117,7 @@ export class AuthService {
     password: string
   ): Promise<ApiResponse<undefined> & { accessToken?: string; refreshToken?: string }> {
     try {
-      const user: undefined | User = await db.query.userTable.findFirst({
+      const user: undefined | User = await this.db.query.userTable.findFirst({
         where: eq(userTable.email, email),
       });
 
@@ -153,7 +155,7 @@ export class AuthService {
         updatedAt: null,
       };
 
-      await redisClient.set(sessionId, JSON.stringify(sessionObj), {
+      await this.redisClient.set(sessionId, JSON.stringify(sessionObj), {
         expiration: {
           type: 'EX',
           value: REFRESH_TTL_SEC,
@@ -200,7 +202,7 @@ export class AuthService {
         const sid = decoded?.sid as string;
 
         if (sid) {
-          await redisClient.del(sid);
+          await this.redisClient.del(sid);
         }
       }
     } catch (err) {
