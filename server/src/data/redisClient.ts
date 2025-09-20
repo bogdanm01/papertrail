@@ -2,7 +2,7 @@ import { createClient } from 'redis';
 
 import env from '@/config/env.js';
 
-export type RedisClient = ReturnType<typeof getRedisClient>;
+export type RedisClient = ReturnType<typeof createClient>;
 
 const getRedisClient = async () =>
   await createClient({ url: env.REDIS_URL })

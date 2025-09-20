@@ -1,6 +1,7 @@
+import 'reflect-metadata';
+
 import type { OpenAPIV3 } from 'openapi-types';
 
-import 'reflect-metadata';
 import { container } from 'tsyringe';
 
 import { apiReference } from '@scalar/express-api-reference';
@@ -14,6 +15,12 @@ import noteRouter from './routes/notes/notes.routes.js';
 import getDbClient, { type DbClient } from './data/db.js';
 import getAuthRoutes from './routes/auth/auth.routes.js';
 import getRedisClient, { type RedisClient } from './data/redisClient.js';
+import { TOKENS } from './config/diTokens.js';
+import { AuthService } from './services/auth.service.js';
+
+container.register<DbClient>(TOKENS.db, { useValue: getDbClient() });
+container.register<RedisClient>(TOKENS.redis, { useValue: await getRedisClient() });
+container.register(TOKENS.authService, { useClass: AuthService });
 
 const app = express();
 
@@ -21,9 +28,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 // eslint-disable-next-line @typescript-eslint/no-unsafe-call
 app.use(cookieParser());
-
-container.register<DbClient>('db', { useValue: getDbClient() });
-container.register<RedisClient>('redisClient', { useValue: getRedisClient() });
 
 const authRoutes = getAuthRoutes();
 

@@ -1,19 +1,15 @@
 import { Router } from 'express';
-
-import AuthController from '@/controllers/auth.controller.js';
-
 import { container } from 'tsyringe';
 
+import { AuthController } from '@/controllers/auth.controller.js';
 import { validateBody } from '@/middlewares/validate.js';
-import { AuthService } from '@/services/auth.service.js';
 
 import { SignUpSchema } from '@/lib/zod/signUpSchema.js';
 import { SignInSchema } from '@/lib/zod/signInSchema.js';
-import type { DbClient } from '@/data/db.js';
-import type { RedisClient } from '@/data/redisClient.js';
 
 const getAuthRoutes = () => {
   const authRouter = Router();
+
   const authController = container.resolve(AuthController);
 
   authRouter.post('/sign-up', validateBody(SignUpSchema), (req, res) => authController.signUp(req, res));
