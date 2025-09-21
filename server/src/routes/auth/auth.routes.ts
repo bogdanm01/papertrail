@@ -2,12 +2,14 @@ import { Router } from 'express';
 import { container } from 'tsyringe';
 
 import { AuthController } from '@/controllers/auth.controller.js';
-import { validateBody } from '@/middlewares/validate.js';
+import { validateBody } from '@/middlewares/validateRequestBody.js';
 
 import { SignUpSchema } from '@/lib/zod/signUpSchema.js';
 import { SignInSchema } from '@/lib/zod/signInSchema.js';
+import { validateAuth, type AuthMiddleware } from '@/middlewares/validateAuth.js';
+import { StatusCodes } from 'http-status-codes';
 
-const getAuthRoutes = () => {
+const getAuthRoutes = (authMiddleware: AuthMiddleware) => {
   const authRouter = Router();
 
   const authController = container.resolve(AuthController);
@@ -16,11 +18,13 @@ const getAuthRoutes = () => {
 
   authRouter.post('/sign-in', validateBody(SignInSchema), (req, res) => authController.signIn(req, res));
 
-  // TODO: authenticated endpoint, get user from cookie
-  authRouter.post('/sign-out', (req, res) => authController.signOut(req, res));
+  authRouter.post('/sign-out', validateAuth, (req, res) => authController.signOut(req, res));
 
-  // TODO: authenticated endpoint
-  authRouter.post('/refresh', (req, res) => authController.refresh(req, res));
+  authRouter.post('/refresh', authMiddleware, (req, res) => authController.refresh(req, res));
+
+  authRouter.get('/test', authMiddleware, (req: any, res) => {
+    res.status(StatusCodes.OK).send({ message: 'authorized' });
+  });
 
   return authRouter;
 };

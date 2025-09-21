@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import { TOKENS } from './config/diTokens.js';
 
 import type { OpenAPIV3 } from 'openapi-types';
 
@@ -13,23 +14,30 @@ import env from './config/env.js';
 import { baseOpenapiSpec } from './config/openApiSpec.js';
 import noteRouter from './routes/notes/notes.routes.js';
 import getDbClient, { type DbClient } from './data/db.js';
-import getAuthRoutes from './routes/auth/auth.routes.js';
 import getRedisClient, { type RedisClient } from './data/redisClient.js';
-import { TOKENS } from './config/diTokens.js';
-import { AuthService } from './services/auth.service.js';
 
-container.register<DbClient>(TOKENS.db, { useValue: getDbClient() });
-container.register<RedisClient>(TOKENS.redis, { useValue: await getRedisClient() });
+import { AuthService } from './services/auth.service.js';
+import getAuthRoutes from './routes/auth/auth.routes.js';
+import { getAuthMiddleware } from './middlewares/validateAuth.js';
+import helmet from 'helmet';
+
+const dbClient = getDbClient();
+const redisClient = await getRedisClient();
+
+container.registerInstance<DbClient>(TOKENS.db, dbClient);
+container.registerInstance<RedisClient>(TOKENS.redis, redisClient);
 container.register(TOKENS.authService, { useClass: AuthService });
 
 const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(helmet());
 // eslint-disable-next-line @typescript-eslint/no-unsafe-call
 app.use(cookieParser());
 
-const authRoutes = getAuthRoutes();
+const authMiddleware = getAuthMiddleware(redisClient);
+const authRoutes = getAuthRoutes(authMiddleware);
 
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/notes', noteRouter);
