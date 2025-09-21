@@ -19,6 +19,7 @@ const getAuthRoutes = () => {
   // TODO: authenticated endpoint, get user from cookie
   authRouter.post('/sign-out', (req, res) => authController.signOut(req, res));
 
+  // TODO: authenticated endpoint
   authRouter.post('/refresh', (req, res) => authController.refresh(req, res));
 
   return authRouter;

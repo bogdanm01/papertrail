@@ -119,16 +119,45 @@ export class AuthController {
       console.log(error);
 
       res.clearCookie(ACCESS_TOKEN_NAME, accessCookieOptions as CookieOptions);
-      res.clearCookie(REFRESH_TOKEN_NAME, accessCookieOptions as CookieOptions);
+      res.clearCookie(REFRESH_TOKEN_NAME, refreshCookieOptions as CookieOptions);
 
       res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Internal error' });
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/require-await
   async refresh(req: Express.Request & { cookies: AuthCookies }, res: Response) {
-    console.log(req.cookies);
+    try {
+      const refreshToken = req.cookies[REFRESH_TOKEN_NAME];
 
-    res.json({ message: 'ok' });
+      if (!refreshToken) {
+        return res.status(StatusCodes.FORBIDDEN).send();
+      }
+
+      const result = await this.authService.refresh(refreshToken);
+      res.status(result.statusHeader);
+
+      if (result.accessToken && result.refreshToken) {
+        res
+          .cookie(ACCESS_TOKEN_NAME, result.accessToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: '/api',
+            maxAge: ACCESS_TTL_SEC * 1000,
+          })
+          .cookie(REFRESH_TOKEN_NAME, result.refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: `/api/v1/auth/refresh`,
+            maxAge: REFRESH_TTL_SEC * 1000,
+          });
+      }
+
+      res.json(result.responseBody);
+    } catch (err) {
+      console.log('refresh error', err);
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).send();
+    }
   }
 }

@@ -97,7 +97,7 @@ export const authApiSpec = {
       description:
         'Deletes the active server session (via access cookie’s `sid`) and clears cookies.\n\n**Method:** POST (state-changing, even with empty body).',
       security: [{ accessCookieAuth: [] }],
-      parameters: [{ $ref: '#/components/parameters/AccessCookie' }],
+      // parameters: [{ $ref: '#/components/parameters/AccessCookie' }],
       responses: {
         ...response('204', 'No Content. Cookies cleared.', {
           headers: {
@@ -123,10 +123,10 @@ export const authApiSpec = {
       tags: ['Auth'],
       description: `Issues a new short-lived access cookie if the refresh cookie is valid and active.\n\n**Method:** POST (state-changing).\n\nOptionally rotates the refresh token (recommended).`,
       security: [{ refreshCookieAuth: [] }],
-      parameters: [
-        { $ref: '#/components/parameters/AccessCookieOptional' },
-        { $ref: '#/components/parameters/RefreshCookie' },
-      ],
+      // parameters: [
+      //   { $ref: '#/components/parameters/AccessCookieOptional' },
+      //   { $ref: '#/components/parameters/RefreshCookie' },
+      // ],
       responses: {
         ...response('200', 'New access cookie issued.', {
           headers: {
@@ -166,7 +166,7 @@ export const authApiSpec = {
       description:
         'Returns a minimal profile for the authenticated user. Useful for app bootstrap. Requires access cookie.',
       security: [{ accessCookieAuth: [] }],
-      parameters: [{ $ref: '#/components/parameters/AccessCookie' }],
+      // parameters: [{ $ref: '#/components/parameters/AccessCookie' }],
       responses: {
         ...response('200', 'OK', {
           content: {

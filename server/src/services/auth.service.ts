@@ -98,7 +98,7 @@ export class AuthService {
           sid: sessionId,
           jti: refreshJti,
         },
-        { key: env.ACCESS_TOKEN_KEY }
+        { key: env.REFRESH_TOKEN_KEY }
       );
 
       return {
@@ -179,7 +179,7 @@ export class AuthService {
           sid: sessionId,
           jti: refreshTokenJti,
         },
-        { key: env.ACCESS_TOKEN_KEY }
+        { key: env.REFRESH_TOKEN_KEY }
       );
 
       return {
@@ -211,6 +211,96 @@ export class AuthService {
       }
     } catch (err) {
       console.log(err);
+      throw err;
+    }
+  }
+
+  async refresh(
+    refreshToken: string
+  ): Promise<ApiResponse<undefined> & { accessToken?: string; refreshToken?: string }> {
+    try {
+      const nowSec = Math.floor(new Date().getTime() / 1000);
+
+      const decodedRefresh = jwt.decode(refreshToken, { json: true });
+      const sid = decodedRefresh?.sid as string;
+      const userId = decodedRefresh?.sub as string;
+      const jti = decodedRefresh?.jti as string;
+
+      const session = await this.redisClient.get(sid);
+
+      if (!session) {
+        return {
+          statusHeader: StatusCodes.UNAUTHORIZED,
+          responseBody: {
+            success: false,
+          },
+        };
+      }
+
+      const sessionObj: Session = JSON.parse(session) as Session;
+
+      if (sessionObj.refreshTokenJti !== jti) {
+        return {
+          statusHeader: StatusCodes.UNAUTHORIZED,
+          responseBody: {
+            success: false,
+          },
+        };
+      }
+
+      const newJti = crypto.randomUUID();
+      const newSessionObj: Session = {
+        ...sessionObj,
+        refreshTokenJti: newJti,
+        updatedAt: new Date().toISOString(),
+      };
+
+      const remainingTTL = await this.redisClient.ttl(sid);
+
+      if (remainingTTL <= 0) {
+        return {
+          statusHeader: StatusCodes.UNAUTHORIZED,
+          responseBody: {
+            success: false,
+            message: 'Session expired.',
+          },
+        };
+      }
+
+      await this.redisClient.set(sid, JSON.stringify(newSessionObj), {
+        expiration: {
+          type: 'EX',
+          value: remainingTTL,
+        },
+      });
+
+      const newAccessToken = createJWT(
+        { sub: userId, exp: nowSec + ACCESS_TTL_SEC, iat: nowSec, sid: sid },
+        { key: env.ACCESS_TOKEN_KEY }
+      );
+
+      const newRefreshToken = createJWT(
+        {
+          sub: userId,
+          exp: nowSec + REFRESH_TTL_SEC,
+          iat: nowSec,
+          sid: sid,
+          jti: newJti,
+        },
+        { key: env.REFRESH_TOKEN_KEY }
+      );
+
+      return {
+        statusHeader: StatusCodes.OK,
+        responseBody: {
+          success: true,
+          message: 'OK',
+        },
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
+      };
+    } catch (err) {
+      console.log('refresh error', err);
       throw err;
     }
   }
