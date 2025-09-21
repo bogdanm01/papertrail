@@ -2,7 +2,7 @@
 
 **Papertrail** is a modern knowledge and productivity platform, inspired by tools like Notion and Obsidian, but designed from the ground up with **real-time collaboration** and **native whiteboarding** support.
 
-It provides a unified space where individuals and teams can **write, organize, brainstorm, and collaborate** — all within one platform.
+It provides a unified space where individuals and teams can **write, organize, brainstorm, and collaborate** all within one platform.
 
 ---
 
