@@ -12,7 +12,7 @@ import env from './config/env.js';
 import { baseOpenapiSpec } from './config/openApiSpec.js';
 import getDbClient, { type DbClient } from './data/db.js';
 import getRedisClient, { type RedisClient } from './data/redisClient.js';
-import getAuthRoutes from './routes/auth/auth.routes.js';
+import getAuthRouter from './routes/auth/auth.routes.js';
 import { AuthService } from './services/auth.service.js';
 
 const dbClient = getDbClient();
@@ -30,7 +30,7 @@ app.use(express.urlencoded({ extended: false }));
 // eslint-disable-next-line @typescript-eslint/no-unsafe-call
 app.use(cookieParser());
 
-const authRoutes = getAuthRoutes();
+const authRoutes = getAuthRouter();
 
 app.use('/api/v1/auth', authRoutes);
 

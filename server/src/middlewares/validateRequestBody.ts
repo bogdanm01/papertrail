@@ -5,7 +5,7 @@ import { z } from 'zod';
 
 import type { ApiResponseBody } from '@/lib/interfaces/apiResponseBody.js';
 
-export const validateBody = (schema: ZodObject): RequestHandler => {
+export const validateRequestBody = (schema: ZodObject): RequestHandler => {
   return (req, res, next) => {
     const result = schema.safeParse(req.body);
 

@@ -7,7 +7,7 @@ import { container } from 'tsyringe';
 import { TOKENS } from '@/config/diTokens.js';
 import env from '@/config/env.js';
 import type { RedisClient } from '@/data/redisClient.js';
-import { authConst } from '@/lib/const.js';
+import { authConsts } from '@/lib/const.js';
 import type { AuthCookies } from '@/lib/interfaces/authCookies.js';
 
 export type AuthMiddleware = ReturnType<typeof getAuthMiddleware>;
@@ -17,7 +17,7 @@ export const getAuthMiddleware = () => {
 
   return async (req: Request & { cookies: AuthCookies }, res: Response, next: NextFunction) => {
     try {
-      const accessToken = req.cookies[authConst.ACCESS_TOKEN_NAME];
+      const accessToken = req.cookies[authConsts.ACCESS_TOKEN_NAME];
 
       if (!accessToken) {
         return res.status(StatusCodes.UNAUTHORIZED).send();
@@ -26,7 +26,7 @@ export const getAuthMiddleware = () => {
       // TODO: Test exp and issuer are verified
       const accessDecoded: any = jwt.verify(accessToken, env.ACCESS_TOKEN_KEY, {
         algorithms: ['HS256'],
-        issuer: authConst.TOKEN_ISSUER,
+        issuer: authConsts.TOKEN_ISSUER,
         ignoreExpiration: false,
         clockTolerance: 5,
       });

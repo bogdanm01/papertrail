@@ -3,7 +3,7 @@ import type { $ZodType } from 'zod/v4/core';
 import jwt from 'jsonwebtoken';
 import z from 'zod';
 
-import { authConst } from './const.js';
+import { authConsts } from './const.js';
 
 export function requiredJSONBody(schema: $ZodType) {
   return {
@@ -47,7 +47,7 @@ export const createJWT = (
     key: string;
   }
 ): string => {
-  return jwt.sign({ ...claims, iss: claims.iss ?? authConst.TOKEN_ISSUER }, options.key, {
+  return jwt.sign({ ...claims, iss: claims.iss ?? authConsts.TOKEN_ISSUER }, options.key, {
     algorithm: options.algorithm ?? 'HS256',
   });
 };

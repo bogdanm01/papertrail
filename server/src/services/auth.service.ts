@@ -12,14 +12,14 @@ import { userTable } from '@/data/schema/user.schema.js';
 import { createJWT } from '@/lib/utils.js';
 import type { Session } from '@/lib/interfaces/session.js';
 import type { AuthCookies } from '@/lib/interfaces/authCookies.js';
-import { authConst } from '@/lib/const.js';
+import { authConsts } from '@/lib/const.js';
 import { inject, injectable } from 'tsyringe';
 import type { RedisClient } from '@/data/redisClient.js';
 import { TOKENS } from '@/config/diTokens.js';
 
-const ACCESS_TTL_SEC = authConst.ACCESS_TTL_SEC;
-const REFRESH_TTL_SEC = authConst.REFRESH_TTL_SEC;
-const ACCESS_TOKEN_NAME = authConst.ACCESS_TOKEN_NAME;
+const ACCESS_TTL_SEC = authConsts.ACCESS_TTL_SEC;
+const REFRESH_TTL_SEC = authConsts.REFRESH_TTL_SEC;
+const ACCESS_TOKEN_NAME = authConsts.ACCESS_TOKEN_NAME;
 
 @injectable()
 export class AuthService {

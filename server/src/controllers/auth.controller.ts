@@ -3,16 +3,16 @@ import { StatusCodes } from 'http-status-codes';
 import { inject, injectable } from 'tsyringe';
 
 import { TOKENS } from '@/config/diTokens.js';
-import { authConst } from '@/lib/const.js';
+import { authConsts } from '@/lib/const.js';
 import type { ApiResponseBody } from '@/lib/interfaces/apiResponseBody.js';
 import type { AuthCookies } from '@/lib/interfaces/authCookies.js';
 import type { SignInRequest, SignUpRequest } from '@/lib/zod/types.js';
 import { AuthService } from '@/services/auth.service.js';
 
-const ACCESS_TTL_SEC = authConst.ACCESS_TTL_SEC;
-const REFRESH_TTL_SEC = authConst.REFRESH_TTL_SEC;
-const ACCESS_TOKEN_NAME = authConst.ACCESS_TOKEN_NAME;
-const REFRESH_TOKEN_NAME = authConst.REFRESH_TOKEN_NAME;
+const ACCESS_TTL_SEC = authConsts.ACCESS_TTL_SEC;
+const REFRESH_TTL_SEC = authConsts.REFRESH_TTL_SEC;
+const ACCESS_TOKEN_NAME = authConsts.ACCESS_TOKEN_NAME;
+const REFRESH_TOKEN_NAME = authConsts.REFRESH_TOKEN_NAME;
 
 @injectable()
 export class AuthController {
@@ -92,15 +92,15 @@ export class AuthController {
     try {
       await this.authService.signOut(req.cookies);
 
-      res.clearCookie(ACCESS_TOKEN_NAME, authConst.ACCESS_COOKIES_OPTIONS as CookieOptions);
-      res.clearCookie(REFRESH_TOKEN_NAME, authConst.REFRESH_COOKIE_OPTIONS as CookieOptions);
+      res.clearCookie(ACCESS_TOKEN_NAME, authConsts.ACCESS_COOKIE_OPTIONS as CookieOptions);
+      res.clearCookie(REFRESH_TOKEN_NAME, authConsts.REFRESH_COOKIE_OPTIONS as CookieOptions);
 
       return res.status(StatusCodes.NO_CONTENT).send('OK');
     } catch (error) {
       console.log(error);
 
-      res.clearCookie(ACCESS_TOKEN_NAME, authConst.ACCESS_COOKIES_OPTIONS as CookieOptions);
-      res.clearCookie(REFRESH_TOKEN_NAME, authConst.REFRESH_COOKIE_OPTIONS as CookieOptions);
+      res.clearCookie(ACCESS_TOKEN_NAME, authConsts.ACCESS_COOKIE_OPTIONS as CookieOptions);
+      res.clearCookie(REFRESH_TOKEN_NAME, authConsts.REFRESH_COOKIE_OPTIONS as CookieOptions);
 
       res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Internal error' });
     }
@@ -141,4 +141,6 @@ export class AuthController {
       res.status(StatusCodes.INTERNAL_SERVER_ERROR).send();
     }
   }
+
+  async me(req: Request, res: Response) {}
 }

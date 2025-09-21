@@ -1,10 +1,10 @@
-import { authConst } from '@/lib/const.js';
+import { authConsts } from '@/lib/const.js';
 import { requiredJSONBody } from '@/lib/utils.js';
 import { SignInSchema } from '@/lib/zod/signInSchema.js';
 import { SignUpSchema } from '@/lib/zod/signUpSchema.js';
 
-const ACCESS_COOKIE = authConst.ACCESS_TOKEN_NAME;
-const REFRESH_COOKIE = authConst.REFRESH_TOKEN_NAME;
+const ACCESS_COOKIE = authConsts.ACCESS_TOKEN_NAME;
+const REFRESH_COOKIE = authConsts.REFRESH_TOKEN_NAME;
 
 function response(code: string, description: string, extra: Record<string, any> = {}) {
   return {
