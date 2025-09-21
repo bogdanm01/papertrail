@@ -14,6 +14,7 @@ import getDbClient, { type DbClient } from './data/db.js';
 import getRedisClient, { type RedisClient } from './data/redisClient.js';
 import getAuthRouter from './routes/auth/auth.routes.js';
 import { AuthService } from './services/auth.service.js';
+import { UserRepository } from './data/repository/user.repository.js';
 
 const dbClient = getDbClient();
 const redisClient = await getRedisClient();
@@ -21,6 +22,7 @@ const redisClient = await getRedisClient();
 container.registerInstance<DbClient>(TOKENS.db, dbClient);
 container.registerInstance<RedisClient>(TOKENS.redis, redisClient);
 container.register(TOKENS.authService, { useClass: AuthService });
+container.register(TOKENS.userRepository, { useClass: UserRepository });
 
 const app = express();
 

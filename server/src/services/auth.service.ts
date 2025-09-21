@@ -7,8 +7,6 @@ import type { User, UserInsert } from '@/data/entity.type.js';
 import type { ApiResponse } from '@/lib/interfaces/apiResponse.js';
 
 import env from '@/config/env.js';
-import { type DbClient } from '@/data/db.js';
-import { userTable } from '@/data/schema/user.schema.js';
 import { createJWT } from '@/lib/utils.js';
 import type { Session } from '@/lib/interfaces/session.js';
 import type { AuthCookies } from '@/lib/interfaces/authCookies.js';
@@ -16,6 +14,7 @@ import { authConsts } from '@/lib/const.js';
 import { inject, injectable } from 'tsyringe';
 import type { RedisClient } from '@/data/redisClient.js';
 import { TOKENS } from '@/config/diTokens.js';
+import type { UserRepository } from '@/data/repository/user.repository.js';
 
 const ACCESS_TTL_SEC = authConsts.ACCESS_TTL_SEC;
 const REFRESH_TTL_SEC = authConsts.REFRESH_TTL_SEC;
@@ -24,8 +23,8 @@ const ACCESS_TOKEN_NAME = authConsts.ACCESS_TOKEN_NAME;
 @injectable()
 export class AuthService {
   constructor(
-    @inject(TOKENS.db) private db: DbClient,
-    @inject(TOKENS.redis) private redisClient: RedisClient
+    @inject(TOKENS.redis) private redisClient: RedisClient,
+    @inject(TOKENS.userRepository) private userRepository: UserRepository
   ) {}
 
   async signUp(
@@ -33,7 +32,7 @@ export class AuthService {
     password: string
   ): Promise<ApiResponse<undefined> & { accessToken?: string; refreshToken?: string }> {
     try {
-      const isEmailRegistered = (await this.db.$count(userTable, eq(userTable.email, email))) > 0;
+      const isEmailRegistered = await this.userRepository.existsByEmail(email);
 
       if (isEmailRegistered) {
         return {
@@ -54,8 +53,8 @@ export class AuthService {
         updatedAt: null,
       };
 
-      const inserted = await this.db.insert(userTable).values(newUser).returning();
-      const savedUser: undefined | User = inserted[0];
+      const inserted = await this.userRepository.insert(newUser);
+      const savedUser: User | undefined = inserted;
 
       if (!savedUser) {
         return {
@@ -121,9 +120,7 @@ export class AuthService {
     password: string
   ): Promise<ApiResponse<undefined> & { accessToken?: string; refreshToken?: string }> {
     try {
-      const user: undefined | User = await this.db.query.userTable.findFirst({
-        where: eq(userTable.email, email),
-      });
+      const user: User | null = await this.userRepository.findByEmail(email);
 
       if (!user) {
         return {
