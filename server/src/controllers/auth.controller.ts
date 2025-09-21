@@ -92,34 +92,18 @@ export class AuthController {
   }
 
   async signOut(req: Express.Request & { cookies: AuthCookies }, res: Response) {
-    const accessCookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/api',
-      maxAge: 0,
-    };
-
-    const refreshCookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/api/v1/auth/refresh',
-      maxAge: 0,
-    };
-
     try {
       await this.authService.signOut(req.cookies);
 
-      res.clearCookie(ACCESS_TOKEN_NAME, accessCookieOptions as CookieOptions);
-      res.clearCookie(REFRESH_TOKEN_NAME, refreshCookieOptions as CookieOptions);
+      res.clearCookie(ACCESS_TOKEN_NAME, authConst.ACCESS_COOKIES_OPTIONS as CookieOptions);
+      res.clearCookie(REFRESH_TOKEN_NAME, authConst.REFRESH_COOKIE_OPTIONS as CookieOptions);
 
       return res.status(StatusCodes.NO_CONTENT).send('OK');
     } catch (error) {
       console.log(error);
 
-      res.clearCookie(ACCESS_TOKEN_NAME, accessCookieOptions as CookieOptions);
-      res.clearCookie(REFRESH_TOKEN_NAME, refreshCookieOptions as CookieOptions);
+      res.clearCookie(ACCESS_TOKEN_NAME, authConst.ACCESS_COOKIES_OPTIONS as CookieOptions);
+      res.clearCookie(REFRESH_TOKEN_NAME, authConst.REFRESH_COOKIE_OPTIONS as CookieOptions);
 
       res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Internal error' });
     }

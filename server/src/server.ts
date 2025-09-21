@@ -18,7 +18,7 @@ import getRedisClient, { type RedisClient } from './data/redisClient.js';
 
 import { AuthService } from './services/auth.service.js';
 import getAuthRoutes from './routes/auth/auth.routes.js';
-import { getAuthMiddleware } from './middlewares/validateAuth.js';
+import { getAuthMiddleware } from './middlewares/auth.js';
 import helmet from 'helmet';
 
 const dbClient = getDbClient();
@@ -32,15 +32,13 @@ const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(helmet());
+// app.use(helmet());
 // eslint-disable-next-line @typescript-eslint/no-unsafe-call
 app.use(cookieParser());
 
-const authMiddleware = getAuthMiddleware(redisClient);
-const authRoutes = getAuthRoutes(authMiddleware);
+const authRoutes = getAuthRoutes();
 
 app.use('/api/v1/auth', authRoutes);
-app.use('/api/v1/notes', noteRouter);
 
 const openapiSpec: OpenAPIV3.Document = swaggerJSDoc(baseOpenapiSpec) as OpenAPIV3.Document;
 
