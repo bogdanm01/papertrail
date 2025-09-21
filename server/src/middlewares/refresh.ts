@@ -1,17 +1,15 @@
-import { authConst } from '@/lib/const.js';
-import type { CookieOptions, RequestHandler } from 'express';
+import type { CookieOptions, Request, Response } from 'express';
+import type { NextFunction } from 'express-serve-static-core';
 import { StatusCodes } from 'http-status-codes';
 import jwt from 'jsonwebtoken';
-import env from '@/config/env.js';
-
 import { container } from 'tsyringe';
-import { TOKENS } from '@/config/diTokens.js';
-import type { Session } from '@/lib/interfaces/session.js';
-import type { NextFunction } from 'express-serve-static-core';
-import type { AuthCookies } from '@/lib/interfaces/authCookies.js';
 
-import type { Request, Response } from 'express';
+import { TOKENS } from '@/config/diTokens.js';
+import env from '@/config/env.js';
 import type { RedisClient } from '@/data/redisClient.js';
+import { authConst } from '@/lib/const.js';
+import type { AuthCookies } from '@/lib/interfaces/authCookies.js';
+import type { Session } from '@/lib/interfaces/session.js';
 
 export type AuthMiddleware = ReturnType<typeof getRefreshMiddleware>;
 

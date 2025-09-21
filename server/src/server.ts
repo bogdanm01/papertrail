@@ -1,25 +1,19 @@
 import 'reflect-metadata';
-import { TOKENS } from './config/diTokens.js';
-
-import type { OpenAPIV3 } from 'openapi-types';
-
-import { container } from 'tsyringe';
 
 import { apiReference } from '@scalar/express-api-reference';
 import cookieParser from 'cookie-parser';
 import express from 'express';
+import type { OpenAPIV3 } from 'openapi-types';
 import swaggerJSDoc from 'swagger-jsdoc';
+import { container } from 'tsyringe';
 
+import { TOKENS } from './config/diTokens.js';
 import env from './config/env.js';
 import { baseOpenapiSpec } from './config/openApiSpec.js';
-import noteRouter from './routes/notes/notes.routes.js';
 import getDbClient, { type DbClient } from './data/db.js';
 import getRedisClient, { type RedisClient } from './data/redisClient.js';
-
-import { AuthService } from './services/auth.service.js';
 import getAuthRoutes from './routes/auth/auth.routes.js';
-import { getAuthMiddleware } from './middlewares/auth.js';
-import helmet from 'helmet';
+import { AuthService } from './services/auth.service.js';
 
 const dbClient = getDbClient();
 const redisClient = await getRedisClient();

@@ -1,16 +1,13 @@
-import type { CookieOptions } from 'express';
-
-import { type Request, type Response } from 'express';
+import type { CookieOptions, Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
+import { inject, injectable } from 'tsyringe';
 
-import type { ApiResponseBody } from '@/lib/interfaces/apiResponseBody.js';
-import { AuthService } from '@/services/auth.service.js';
-
+import { TOKENS } from '@/config/diTokens.js';
 import { authConst } from '@/lib/const.js';
+import type { ApiResponseBody } from '@/lib/interfaces/apiResponseBody.js';
 import type { AuthCookies } from '@/lib/interfaces/authCookies.js';
 import type { SignInRequest, SignUpRequest } from '@/lib/zod/types.js';
-import { inject, injectable } from 'tsyringe';
-import { TOKENS } from '@/config/diTokens.js';
+import { AuthService } from '@/services/auth.service.js';
 
 const ACCESS_TTL_SEC = authConst.ACCESS_TTL_SEC;
 const REFRESH_TTL_SEC = authConst.REFRESH_TTL_SEC;

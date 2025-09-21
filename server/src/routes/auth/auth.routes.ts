@@ -1,14 +1,13 @@
 import { Router } from 'express';
+import { StatusCodes } from 'http-status-codes';
 import { container } from 'tsyringe';
 
 import { AuthController } from '@/controllers/auth.controller.js';
-import { validateBody } from '@/middlewares/validateRequestBody.js';
-
-import { SignUpSchema } from '@/lib/zod/signUpSchema.js';
-import { SignInSchema } from '@/lib/zod/signInSchema.js';
 import { getAuthMiddleware } from '@/middlewares/auth.js';
-import { StatusCodes } from 'http-status-codes';
 import { getRefreshMiddleware } from '@/middlewares/refresh.js';
+import { validateBody } from '@/middlewares/validateRequestBody.js';
+import { SignInSchema } from '@/lib/zod/signInSchema.js';
+import { SignUpSchema } from '@/lib/zod/signUpSchema.js';
 
 const getAuthRoutes = () => {
   const authRouter = Router();
