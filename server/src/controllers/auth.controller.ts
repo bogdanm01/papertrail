@@ -31,8 +31,6 @@ export class AuthController {
 
       res.status(result.statusHeader);
 
-      console.log(result);
-
       if (result.accessToken && result.refreshToken) {
         res
           .cookie(ACCESS_TOKEN_NAME, result.accessToken, {
