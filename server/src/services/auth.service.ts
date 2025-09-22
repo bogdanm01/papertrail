@@ -1,5 +1,4 @@
 import * as argon from 'argon2';
-import { eq } from 'drizzle-orm';
 import { StatusCodes } from 'http-status-codes';
 import jwt from 'jsonwebtoken';
 
@@ -194,18 +193,9 @@ export class AuthService {
     }
   }
 
-  async signOut(cookies: AuthCookies) {
+  async signOut(sessionId: string) {
     try {
-      const token: string | undefined = cookies[ACCESS_TOKEN_NAME];
-
-      if (token) {
-        const decoded = jwt.decode(token, { json: true });
-        const sid = decoded?.sid as string;
-
-        if (sid) {
-          await this.redisClient.del(sid);
-        }
-      }
+      await this.redisClient.del(sessionId);
     } catch (err) {
       console.log(err);
       throw err;
@@ -213,17 +203,14 @@ export class AuthService {
   }
 
   async refresh(
-    refreshToken: string
+    sessionId: string,
+    userId: string,
+    jti: string
   ): Promise<ApiResponse<undefined> & { accessToken?: string; refreshToken?: string }> {
     try {
       const nowSec = Math.floor(new Date().getTime() / 1000);
 
-      const decodedRefresh = jwt.decode(refreshToken, { json: true });
-      const sid = decodedRefresh?.sid as string;
-      const userId = decodedRefresh?.sub as string;
-      const jti = decodedRefresh?.jti as string;
-
-      const session = await this.redisClient.get(sid);
+      const session = await this.redisClient.get(sessionId);
 
       if (!session) {
         return {
@@ -252,19 +239,18 @@ export class AuthService {
         updatedAt: new Date().toISOString(),
       };
 
-      const remainingTTL = await this.redisClient.ttl(sid);
+      const remainingTTL = await this.redisClient.ttl(sessionId);
 
       if (remainingTTL <= 0) {
         return {
           statusHeader: StatusCodes.UNAUTHORIZED,
           responseBody: {
             success: false,
-            message: 'Session expired.',
           },
         };
       }
 
-      await this.redisClient.set(sid, JSON.stringify(newSessionObj), {
+      await this.redisClient.set(sessionId, JSON.stringify(newSessionObj), {
         expiration: {
           type: 'EX',
           value: remainingTTL,
@@ -272,7 +258,7 @@ export class AuthService {
       });
 
       const newAccessToken = createJWT(
-        { sub: userId, exp: nowSec + ACCESS_TTL_SEC, iat: nowSec, sid: sid },
+        { sub: userId, exp: nowSec + ACCESS_TTL_SEC, iat: nowSec, sid: sessionId },
         { key: env.ACCESS_TOKEN_KEY }
       );
 
@@ -281,7 +267,7 @@ export class AuthService {
           sub: userId,
           exp: nowSec + REFRESH_TTL_SEC,
           iat: nowSec,
-          sid: sid,
+          sid: sessionId,
           jti: newJti,
         },
         { key: env.REFRESH_TOKEN_KEY }
@@ -299,6 +285,37 @@ export class AuthService {
     } catch (err) {
       console.log('refresh error', err);
       throw err;
+    }
+  }
+
+  async me(userId: string, sessionId: string): Promise<ApiResponse<{ email: string }>> {
+    try {
+      const dbUser: User | null = await this.userRepository.findById(userId);
+
+      if (!dbUser) {
+        await this.redisClient.del(sessionId);
+        return {
+          statusHeader: StatusCodes.UNAUTHORIZED,
+          responseBody: {
+            success: false,
+          },
+        };
+      }
+
+      const authUser = {
+        email: dbUser.email,
+      };
+
+      return {
+        statusHeader: StatusCodes.OK,
+        responseBody: {
+          success: true,
+          data: authUser,
+        },
+      };
+    } catch (error) {
+      console.log('me error', error);
+      throw error;
     }
   }
 }

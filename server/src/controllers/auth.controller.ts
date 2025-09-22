@@ -48,8 +48,7 @@ export class AuthController {
 
       res.json(result.responseBody);
     } catch (err) {
-      console.log(err);
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR);
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).send();
     }
   }
 
@@ -83,14 +82,15 @@ export class AuthController {
 
       res.json(result.responseBody);
     } catch (err) {
-      console.log('signIn error', err);
       res.status(StatusCodes.INTERNAL_SERVER_ERROR).send();
     }
   }
 
   async signOut(req: Express.Request & { cookies: AuthCookies }, res: Response) {
     try {
-      await this.authService.signOut(req.cookies);
+      const { sessionId } = req.auth;
+
+      await this.authService.signOut(sessionId);
 
       res.clearCookie(ACCESS_TOKEN_NAME, authConsts.ACCESS_COOKIE_OPTIONS as CookieOptions);
       res.clearCookie(REFRESH_TOKEN_NAME, authConsts.REFRESH_COOKIE_OPTIONS as CookieOptions);
@@ -102,20 +102,15 @@ export class AuthController {
       res.clearCookie(ACCESS_TOKEN_NAME, authConsts.ACCESS_COOKIE_OPTIONS as CookieOptions);
       res.clearCookie(REFRESH_TOKEN_NAME, authConsts.REFRESH_COOKIE_OPTIONS as CookieOptions);
 
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Internal error' });
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).send();
     }
   }
 
   async refresh(req: Express.Request & { cookies: AuthCookies }, res: Response) {
     try {
-      const refreshToken = req.cookies[REFRESH_TOKEN_NAME];
+      const { userId, sessionId, jti } = req.auth;
 
-      if (!refreshToken) {
-        return res.status(StatusCodes.FORBIDDEN).send();
-      }
-
-      const result = await this.authService.refresh(refreshToken);
-      res.status(result.statusHeader);
+      const result = await this.authService.refresh(sessionId, userId, jti!);
 
       if (result.accessToken && result.refreshToken) {
         res
@@ -135,12 +130,26 @@ export class AuthController {
           });
       }
 
-      res.json(result.responseBody);
+      res.status(result.statusHeader).json(result.responseBody);
     } catch (err) {
-      console.log('refresh error', err);
       res.status(StatusCodes.INTERNAL_SERVER_ERROR).send();
     }
   }
 
-  async me(req: Request, res: Response) {}
+  async me(req: Request, res: Response) {
+    try {
+      const { userId, sessionId } = req.auth;
+
+      const result = await this.authService.me(userId, sessionId);
+
+      if (!result.responseBody.success) {
+        res.clearCookie(ACCESS_TOKEN_NAME, authConsts.ACCESS_COOKIE_OPTIONS as CookieOptions);
+        res.clearCookie(REFRESH_TOKEN_NAME, authConsts.REFRESH_COOKIE_OPTIONS as CookieOptions);
+      }
+
+      res.status(result.statusHeader).json(result.responseBody);
+    } catch (error) {
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).send();
+    }
+  }
 }

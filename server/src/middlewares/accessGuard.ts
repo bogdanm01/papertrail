@@ -10,9 +10,9 @@ import type { RedisClient } from '@/data/redisClient.js';
 import { authConsts } from '@/lib/const.js';
 import type { AuthCookies } from '@/lib/interfaces/authCookies.js';
 
-export type AuthMiddleware = ReturnType<typeof getAuthMiddleware>;
+export type AuthMiddleware = ReturnType<typeof getAccessGuard>;
 
-export const getAuthMiddleware = () => {
+export const getAccessGuard = () => {
   const redisClient: RedisClient = container.resolve(TOKENS.redis);
 
   return async (req: Request & { cookies: AuthCookies }, res: Response, next: NextFunction) => {
@@ -24,27 +24,32 @@ export const getAuthMiddleware = () => {
       }
 
       // TODO: Test exp and issuer are verified
-      const accessDecoded: any = jwt.verify(accessToken, env.ACCESS_TOKEN_KEY, {
+      const decoded: any = jwt.verify(accessToken, env.ACCESS_TOKEN_KEY, {
         algorithms: ['HS256'],
         issuer: authConsts.TOKEN_ISSUER,
         ignoreExpiration: false,
         clockTolerance: 5,
       });
 
-      if (!accessDecoded.sid || !accessDecoded.sub) {
+      if (!decoded.sid || !decoded.sub) {
         return res.status(StatusCodes.UNAUTHORIZED).send();
       }
 
-      const session: string | null = await redisClient.get(accessDecoded.sid);
+      const session: string | null = await redisClient.get(decoded.sid);
 
       if (!session) {
         return res.status(StatusCodes.UNAUTHORIZED).send();
       }
 
+      req.auth = {
+        sessionId: decoded.sid,
+        userId: decoded.sub,
+      };
+
       return next();
     } catch (error: any) {
       console.log(error);
-      return res.status(StatusCodes.UNAUTHORIZED).send();
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).send();
     }
   };
 };

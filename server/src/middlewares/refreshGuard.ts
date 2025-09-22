@@ -11,9 +11,9 @@ import { authConsts } from '@/lib/const.js';
 import type { AuthCookies } from '@/lib/interfaces/authCookies.js';
 import type { Session } from '@/lib/interfaces/session.js';
 
-export type RefreshMiddleware = ReturnType<typeof getRefreshMiddleware>;
+export type RefreshMiddleware = ReturnType<typeof getRefreshGuard>;
 
-export const getRefreshMiddleware = () => {
+export const getRefreshGuard = () => {
   const redisClient: RedisClient = container.resolve(TOKENS.redis);
 
   return async (req: Request & { cookies: AuthCookies }, res: Response, next: NextFunction) => {
@@ -52,10 +52,20 @@ export const getRefreshMiddleware = () => {
         return res.status(StatusCodes.UNAUTHORIZED).send();
       }
 
+      req.auth = {
+        sessionId: decoded.sid,
+        userId: decoded.sub,
+        jti: decoded.jti,
+      };
+
       return next();
     } catch (error) {
       console.log(error);
-      return res.status(StatusCodes.UNAUTHORIZED).send();
+
+      res.clearCookie(authConsts.ACCESS_TOKEN_NAME, authConsts.ACCESS_COOKIE_OPTIONS as CookieOptions);
+      res.clearCookie(authConsts.REFRESH_TOKEN_NAME, authConsts.REFRESH_COOKIE_OPTIONS as CookieOptions);
+
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).send();
     }
   };
 };
