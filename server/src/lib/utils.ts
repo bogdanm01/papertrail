@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import z from 'zod';
 
 import { authConsts } from './const.js';
+import type { CookieOptions, Response } from 'express';
 
 export function requiredJSONBody(schema: $ZodType) {
   return {
@@ -50,4 +51,9 @@ export const createJWT = (
   return jwt.sign({ ...claims, iss: claims.iss ?? authConsts.TOKEN_ISSUER }, options.key, {
     algorithm: options.algorithm ?? 'HS256',
   });
+};
+
+export const clearAuthCookies = (res: Response<any, Record<string, any>>) => {
+  res.clearCookie(authConsts.ACCESS_TOKEN_NAME, authConsts.ACCESS_COOKIE_OPTIONS as CookieOptions);
+  res.clearCookie(authConsts.REFRESH_TOKEN_NAME, authConsts.REFRESH_COOKIE_OPTIONS as CookieOptions);
 };
