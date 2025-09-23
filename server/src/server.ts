@@ -15,6 +15,8 @@ import getRedisClient, { type RedisClient } from './data/redisClient.js';
 import getAuthRouter from './routes/auth/auth.routes.js';
 import { AuthService } from './services/auth.service.js';
 import { UserRepository } from './data/repository/user.repository.js';
+import { errorHandler } from './middlewares/errorHandler.js';
+import logger from '@/config/logger.js';
 
 const dbClient = getDbClient();
 const redisClient = await getRedisClient();
@@ -49,8 +51,10 @@ app.use(
   })
 );
 
+app.use(errorHandler);
+
 app.listen(env.PORT, () => {
-  console.log(`Server running on http://localhost:${env.PORT}`);
+  logger.info(`Server running on http://localhost:${env.PORT}`);
 });
 
 export default app;
