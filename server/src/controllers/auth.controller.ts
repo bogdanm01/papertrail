@@ -1,4 +1,4 @@
-import type { CookieOptions, Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { inject, injectable } from 'tsyringe';
 
@@ -8,9 +8,8 @@ import type { ApiResponseBody } from '@/lib/interfaces/apiResponseBody.js';
 import type { AuthCookies } from '@/lib/interfaces/authCookies.js';
 import type { SignInRequest, SignUpRequest } from '@/lib/zod/types.js';
 import { AuthService } from '@/services/auth.service.js';
+import { clearAuthCookies } from '@/lib/utils.js';
 
-const ACCESS_TTL_SEC = authConsts.ACCESS_TTL_SEC;
-const REFRESH_TTL_SEC = authConsts.REFRESH_TTL_SEC;
 const ACCESS_TOKEN_NAME = authConsts.ACCESS_TOKEN_NAME;
 const REFRESH_TOKEN_NAME = authConsts.REFRESH_TOKEN_NAME;
 
@@ -22,68 +21,36 @@ export class AuthController {
     req: Request<object, ApiResponseBody<undefined>, SignUpRequest>,
     res: Response<ApiResponseBody<undefined>>
   ) {
-    try {
-      const { email, password } = req.body;
-      const result = await this.authService.signUp(email, password);
+    const { email, password } = req.body;
+    const result = await this.authService.signUp(email, password);
 
-      res.status(result.statusHeader);
+    res.status(result.statusHeader);
 
-      if (result.accessToken && result.refreshToken) {
-        res
-          .cookie(ACCESS_TOKEN_NAME, result.accessToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            path: '/api',
-            maxAge: ACCESS_TTL_SEC * 1000,
-          })
-          .cookie(REFRESH_TOKEN_NAME, result.refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            path: '/api/v1/auth/refresh',
-            maxAge: REFRESH_TTL_SEC * 1000,
-          });
-      }
-
-      res.json(result.responseBody);
-    } catch (err) {
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).send();
+    if (result.accessToken && result.refreshToken) {
+      res
+        .cookie(ACCESS_TOKEN_NAME, result.accessToken, authConsts.ACCESS_COOKIE_OPTIONS)
+        .cookie(REFRESH_TOKEN_NAME, result.refreshToken, authConsts.REFRESH_COOKIE_OPTIONS);
     }
+
+    res.json(result.responseBody);
   }
 
   async signIn(
     req: Request<object, ApiResponseBody<undefined>, SignInRequest>,
     res: Response<ApiResponseBody<undefined>>
   ) {
-    try {
-      const { email, password } = req.body;
-      const result = await this.authService.signIn(email, password);
+    const { email, password } = req.body;
+    const result = await this.authService.signIn(email, password);
 
-      res.status(result.statusHeader);
+    res.status(result.statusHeader);
 
-      if (result.accessToken && result.refreshToken) {
-        res
-          .cookie(ACCESS_TOKEN_NAME, result.accessToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            path: '/api',
-            maxAge: ACCESS_TTL_SEC * 1000,
-          })
-          .cookie(REFRESH_TOKEN_NAME, result.refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            path: `/api/v1/auth/refresh`,
-            maxAge: REFRESH_TTL_SEC * 1000,
-          });
-      }
-
-      res.json(result.responseBody);
-    } catch (err) {
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).send();
+    if (result.accessToken && result.refreshToken) {
+      res
+        .cookie(ACCESS_TOKEN_NAME, result.accessToken, authConsts.ACCESS_COOKIE_OPTIONS)
+        .cookie(REFRESH_TOKEN_NAME, result.refreshToken, authConsts.REFRESH_COOKIE_OPTIONS);
     }
+
+    res.json(result.responseBody);
   }
 
   async signOut(req: Express.Request & { cookies: AuthCookies }, res: Response) {
@@ -92,64 +59,36 @@ export class AuthController {
 
       await this.authService.signOut(sessionId);
 
-      res.clearCookie(ACCESS_TOKEN_NAME, authConsts.ACCESS_COOKIE_OPTIONS as CookieOptions);
-      res.clearCookie(REFRESH_TOKEN_NAME, authConsts.REFRESH_COOKIE_OPTIONS as CookieOptions);
+      clearAuthCookies(res);
 
-      return res.status(StatusCodes.NO_CONTENT).send('OK');
+      return res.status(StatusCodes.NO_CONTENT).send({ success: true });
     } catch (error) {
-      console.log(error);
-
-      res.clearCookie(ACCESS_TOKEN_NAME, authConsts.ACCESS_COOKIE_OPTIONS as CookieOptions);
-      res.clearCookie(REFRESH_TOKEN_NAME, authConsts.REFRESH_COOKIE_OPTIONS as CookieOptions);
-
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).send();
+      clearAuthCookies(res);
+      throw error;
     }
   }
 
   async refresh(req: Express.Request & { cookies: AuthCookies }, res: Response) {
-    try {
-      const { userId, sessionId, jti } = req.auth;
+    const { userId, sessionId, jti } = req.auth;
+    const result = await this.authService.refresh(sessionId, userId, jti!);
 
-      const result = await this.authService.refresh(sessionId, userId, jti!);
-
-      if (result.accessToken && result.refreshToken) {
-        res
-          .cookie(ACCESS_TOKEN_NAME, result.accessToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            path: '/api',
-            maxAge: ACCESS_TTL_SEC * 1000,
-          })
-          .cookie(REFRESH_TOKEN_NAME, result.refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            path: `/api/v1/auth/refresh`,
-            maxAge: REFRESH_TTL_SEC * 1000,
-          });
-      }
-
-      res.status(result.statusHeader).json(result.responseBody);
-    } catch (err) {
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).send();
+    if (result.accessToken && result.refreshToken) {
+      res
+        .cookie(ACCESS_TOKEN_NAME, result.accessToken, authConsts.ACCESS_COOKIE_OPTIONS)
+        .cookie(REFRESH_TOKEN_NAME, result.refreshToken, authConsts.REFRESH_COOKIE_OPTIONS);
     }
+
+    res.status(result.statusHeader).json(result.responseBody);
   }
 
   async me(req: Request, res: Response) {
-    try {
-      const { userId, sessionId } = req.auth;
+    const { userId, sessionId } = req.auth;
+    const result = await this.authService.me(userId, sessionId);
 
-      const result = await this.authService.me(userId, sessionId);
-
-      if (!result.responseBody.success) {
-        res.clearCookie(ACCESS_TOKEN_NAME, authConsts.ACCESS_COOKIE_OPTIONS as CookieOptions);
-        res.clearCookie(REFRESH_TOKEN_NAME, authConsts.REFRESH_COOKIE_OPTIONS as CookieOptions);
-      }
-
-      res.status(result.statusHeader).json(result.responseBody);
-    } catch (error) {
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).send();
+    if (!result.responseBody.success) {
+      clearAuthCookies(res);
     }
+
+    res.status(result.statusHeader).json(result.responseBody);
   }
 }

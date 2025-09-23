@@ -1,6 +1,5 @@
 import * as argon from 'argon2';
 import { StatusCodes } from 'http-status-codes';
-import jwt from 'jsonwebtoken';
 
 import type { User, UserInsert } from '@/data/entity.type.js';
 import type { ApiResponse } from '@/lib/interfaces/apiResponse.js';
@@ -8,16 +7,15 @@ import type { ApiResponse } from '@/lib/interfaces/apiResponse.js';
 import env from '@/config/env.js';
 import { createJWT } from '@/lib/utils.js';
 import type { Session } from '@/lib/interfaces/session.js';
-import type { AuthCookies } from '@/lib/interfaces/authCookies.js';
 import { authConsts } from '@/lib/const.js';
 import { inject, injectable } from 'tsyringe';
 import type { RedisClient } from '@/data/redisClient.js';
 import { TOKENS } from '@/config/diTokens.js';
 import type { UserRepository } from '@/data/repository/user.repository.js';
+import { AppError } from '@/lib/errors/appError.js';
 
 const ACCESS_TTL_SEC = authConsts.ACCESS_TTL_SEC;
 const REFRESH_TTL_SEC = authConsts.REFRESH_TTL_SEC;
-const ACCESS_TOKEN_NAME = authConsts.ACCESS_TOKEN_NAME;
 
 @injectable()
 export class AuthService {
@@ -30,174 +28,139 @@ export class AuthService {
     email: string,
     password: string
   ): Promise<ApiResponse<undefined> & { accessToken?: string; refreshToken?: string }> {
-    try {
-      const isEmailRegistered = await this.userRepository.existsByEmail(email);
+    const isEmailRegistered = await this.userRepository.existsByEmail(email);
 
-      if (isEmailRegistered) {
-        return {
-          statusHeader: StatusCodes.BAD_REQUEST,
-          responseBody: {
-            success: false,
-            message: 'Email address is already in use.',
-          },
-        };
-      }
-
-      const hashedPassword = await argon.hash(password, { type: argon.argon2id });
-
-      const newUser: UserInsert = {
-        email: email,
-        password: hashedPassword,
-        createdAt: new Date(),
-        updatedAt: null,
-      };
-
-      const inserted = await this.userRepository.insert(newUser);
-      const savedUser: User | undefined = inserted;
-
-      if (!savedUser) {
-        return {
-          statusHeader: StatusCodes.INTERNAL_SERVER_ERROR,
-          responseBody: {
-            success: false,
-            message: 'Failed to create user.',
-          },
-        };
-      }
-
-      const nowSec = Math.floor(new Date().getTime() / 1000);
-      const sessionId = crypto.randomUUID();
-      const refreshJti = crypto.randomUUID();
-
-      const sessionObj: Session = {
-        user: savedUser.id,
-        refreshTokenJti: refreshJti,
-        createdAt: new Date().toISOString(),
-        updatedAt: null,
-      };
-
-      await this.redisClient.set(sessionId, JSON.stringify(sessionObj), {
-        expiration: {
-          type: 'EX',
-          value: REFRESH_TTL_SEC,
-        },
-      });
-
-      const accessToken = createJWT(
-        { sub: savedUser.id, exp: nowSec + ACCESS_TTL_SEC, iat: nowSec, sid: sessionId },
-        { key: env.ACCESS_TOKEN_KEY }
-      );
-
-      const refreshToken = createJWT(
-        {
-          sub: savedUser.id,
-          exp: nowSec + REFRESH_TTL_SEC,
-          iat: nowSec,
-          sid: sessionId,
-          jti: refreshJti,
-        },
-        { key: env.REFRESH_TOKEN_KEY }
-      );
-
-      return {
-        statusHeader: StatusCodes.OK,
-        responseBody: {
-          success: true,
-          message: 'User registered successfully.',
-        },
-        accessToken: accessToken,
-        refreshToken: refreshToken,
-      };
-    } catch (err) {
-      console.log(err);
-      throw err;
+    if (isEmailRegistered) {
+      throw new AppError(StatusCodes.BAD_REQUEST, 'Email address is already in use');
     }
+
+    const hashedPassword = await argon.hash(password, { type: argon.argon2id });
+
+    const newUser: UserInsert = {
+      email: email,
+      password: hashedPassword,
+      createdAt: new Date(),
+      updatedAt: null,
+    };
+
+    const inserted = await this.userRepository.insert(newUser);
+    const savedUser: User | undefined = inserted;
+
+    if (!savedUser) {
+      throw new Error('Failed to create user');
+    }
+
+    const nowSec = Math.floor(new Date().getTime() / 1000);
+    const sessionId = crypto.randomUUID();
+    const refreshJti = crypto.randomUUID();
+
+    const sessionObj: Session = {
+      user: savedUser.id,
+      refreshTokenJti: refreshJti,
+      createdAt: new Date().toISOString(),
+      updatedAt: null,
+    };
+
+    await this.redisClient.set(sessionId, JSON.stringify(sessionObj), {
+      expiration: {
+        type: 'EX',
+        value: REFRESH_TTL_SEC,
+      },
+    });
+
+    const accessToken = createJWT(
+      { sub: savedUser.id, exp: nowSec + ACCESS_TTL_SEC, iat: nowSec, sid: sessionId },
+      { key: env.ACCESS_TOKEN_KEY }
+    );
+
+    const refreshToken = createJWT(
+      {
+        sub: savedUser.id,
+        exp: nowSec + REFRESH_TTL_SEC,
+        iat: nowSec,
+        sid: sessionId,
+        jti: refreshJti,
+      },
+      { key: env.REFRESH_TOKEN_KEY }
+    );
+
+    return {
+      statusHeader: StatusCodes.OK,
+      responseBody: {
+        success: true,
+        message: 'User registered successfully.',
+      },
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+    };
   }
 
   async signIn(
     email: string,
     password: string
   ): Promise<ApiResponse<undefined> & { accessToken?: string; refreshToken?: string }> {
-    try {
-      const user: User | null = await this.userRepository.findByEmail(email);
+    const user: User | null = await this.userRepository.findByEmail(email);
 
-      if (!user) {
-        return {
-          statusHeader: StatusCodes.BAD_REQUEST,
-          responseBody: {
-            success: false,
-            message: 'Incorrect user credentials.',
-          },
-        };
-      }
-
-      const passwordMatches: boolean = await argon.verify(user.password, password);
-
-      if (!passwordMatches) {
-        return {
-          statusHeader: StatusCodes.BAD_REQUEST,
-          responseBody: {
-            success: false,
-            message: 'Incorrect user credentials.',
-          },
-        };
-      }
-
-      // TODO: Consider session number limit
-      const sessionId = crypto.randomUUID();
-      const refreshTokenJti = crypto.randomUUID();
-      const nowSec = Math.floor(new Date().getTime() / 1000);
-
-      const sessionObj: Session = {
-        user: user.id,
-        refreshTokenJti: refreshTokenJti,
-        createdAt: new Date().toISOString(),
-        updatedAt: null,
-      };
-
-      await this.redisClient.set(sessionId, JSON.stringify(sessionObj), {
-        expiration: {
-          type: 'EX',
-          value: REFRESH_TTL_SEC,
-        },
-      });
-
-      const accessToken = createJWT(
-        { sub: user.id, exp: nowSec + ACCESS_TTL_SEC, iat: nowSec, sid: sessionId },
-        { key: env.ACCESS_TOKEN_KEY }
-      );
-
-      const refreshToken = createJWT(
-        {
-          sub: user.id,
-          exp: nowSec + REFRESH_TTL_SEC,
-          iat: nowSec,
-          sid: sessionId,
-          jti: refreshTokenJti,
-        },
-        { key: env.REFRESH_TOKEN_KEY }
-      );
-
-      return {
-        statusHeader: StatusCodes.OK,
-        responseBody: {
-          success: true,
-          message: 'OK',
-        },
-        accessToken,
-        refreshToken,
-      };
-    } catch (err) {
-      console.log('signIn error', err);
-      throw err;
+    if (!user) {
+      throw new AppError(StatusCodes.BAD_REQUEST, 'Incorrect user credentials');
     }
+
+    const passwordMatches: boolean = await argon.verify(user.password, password);
+
+    if (!passwordMatches) {
+      throw new AppError(StatusCodes.BAD_REQUEST, 'Incorrect user credentials');
+    }
+
+    // TODO: Consider session number limit
+    const sessionId = crypto.randomUUID();
+    const refreshTokenJti = crypto.randomUUID();
+    const nowSec = Math.floor(new Date().getTime() / 1000);
+
+    const sessionObj: Session = {
+      user: user.id,
+      refreshTokenJti: refreshTokenJti,
+      createdAt: new Date().toISOString(),
+      updatedAt: null,
+    };
+
+    await this.redisClient.set(sessionId, JSON.stringify(sessionObj), {
+      expiration: {
+        type: 'EX',
+        value: REFRESH_TTL_SEC,
+      },
+    });
+
+    const accessToken = createJWT(
+      { sub: user.id, exp: nowSec + ACCESS_TTL_SEC, iat: nowSec, sid: sessionId },
+      { key: env.ACCESS_TOKEN_KEY }
+    );
+
+    const refreshToken = createJWT(
+      {
+        sub: user.id,
+        exp: nowSec + REFRESH_TTL_SEC,
+        iat: nowSec,
+        sid: sessionId,
+        jti: refreshTokenJti,
+      },
+      { key: env.REFRESH_TOKEN_KEY }
+    );
+
+    return {
+      statusHeader: StatusCodes.OK,
+      responseBody: {
+        success: true,
+        message: 'OK',
+      },
+      accessToken,
+      refreshToken,
+    };
   }
 
   async signOut(sessionId: string) {
     try {
       await this.redisClient.del(sessionId);
     } catch (err) {
-      console.log(err);
       throw err;
     }
   }
@@ -207,115 +170,81 @@ export class AuthService {
     userId: string,
     jti: string
   ): Promise<ApiResponse<undefined> & { accessToken?: string; refreshToken?: string }> {
-    try {
-      const nowSec = Math.floor(new Date().getTime() / 1000);
+    const nowSec = Math.floor(new Date().getTime() / 1000);
+    const session = await this.redisClient.get(sessionId);
 
-      const session = await this.redisClient.get(sessionId);
-
-      if (!session) {
-        return {
-          statusHeader: StatusCodes.UNAUTHORIZED,
-          responseBody: {
-            success: false,
-          },
-        };
-      }
-
-      const sessionObj: Session = JSON.parse(session) as Session;
-
-      if (sessionObj.refreshTokenJti !== jti) {
-        return {
-          statusHeader: StatusCodes.UNAUTHORIZED,
-          responseBody: {
-            success: false,
-          },
-        };
-      }
-
-      const newJti = crypto.randomUUID();
-      const newSessionObj: Session = {
-        ...sessionObj,
-        refreshTokenJti: newJti,
-        updatedAt: new Date().toISOString(),
-      };
-
-      const remainingTTL = await this.redisClient.ttl(sessionId);
-
-      if (remainingTTL <= 0) {
-        return {
-          statusHeader: StatusCodes.UNAUTHORIZED,
-          responseBody: {
-            success: false,
-          },
-        };
-      }
-
-      await this.redisClient.set(sessionId, JSON.stringify(newSessionObj), {
-        expiration: {
-          type: 'EX',
-          value: remainingTTL,
-        },
-      });
-
-      const newAccessToken = createJWT(
-        { sub: userId, exp: nowSec + ACCESS_TTL_SEC, iat: nowSec, sid: sessionId },
-        { key: env.ACCESS_TOKEN_KEY }
-      );
-
-      const newRefreshToken = createJWT(
-        {
-          sub: userId,
-          exp: nowSec + REFRESH_TTL_SEC,
-          iat: nowSec,
-          sid: sessionId,
-          jti: newJti,
-        },
-        { key: env.REFRESH_TOKEN_KEY }
-      );
-
-      return {
-        statusHeader: StatusCodes.OK,
-        responseBody: {
-          success: true,
-          message: 'OK',
-        },
-        accessToken: newAccessToken,
-        refreshToken: newRefreshToken,
-      };
-    } catch (err) {
-      console.log('refresh error', err);
-      throw err;
+    // TODO: Get session from req.auth
+    if (!session) {
+      throw new AppError(StatusCodes.UNAUTHORIZED);
     }
+
+    const sessionObj: Session = JSON.parse(session) as Session;
+
+    const newJti = crypto.randomUUID();
+    const newSessionObj: Session = {
+      ...sessionObj,
+      refreshTokenJti: newJti,
+      updatedAt: new Date().toISOString(),
+    };
+
+    const remainingTTL = await this.redisClient.ttl(sessionId);
+
+    if (remainingTTL <= 0) {
+      throw new AppError(StatusCodes.UNAUTHORIZED);
+    }
+
+    await this.redisClient.set(sessionId, JSON.stringify(newSessionObj), {
+      expiration: {
+        type: 'EX',
+        value: remainingTTL,
+      },
+    });
+
+    const newAccessToken = createJWT(
+      { sub: userId, exp: nowSec + ACCESS_TTL_SEC, iat: nowSec, sid: sessionId },
+      { key: env.ACCESS_TOKEN_KEY }
+    );
+
+    const newRefreshToken = createJWT(
+      {
+        sub: userId,
+        exp: nowSec + REFRESH_TTL_SEC,
+        iat: nowSec,
+        sid: sessionId,
+        jti: newJti,
+      },
+      { key: env.REFRESH_TOKEN_KEY }
+    );
+
+    return {
+      statusHeader: StatusCodes.OK,
+      responseBody: {
+        success: true,
+        message: 'OK',
+      },
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+    };
   }
 
   async me(userId: string, sessionId: string): Promise<ApiResponse<{ email: string }>> {
-    try {
-      const dbUser: User | null = await this.userRepository.findById(userId);
+    const dbUser: User | null = await this.userRepository.findById(userId);
 
-      if (!dbUser) {
-        await this.redisClient.del(sessionId);
-        return {
-          statusHeader: StatusCodes.UNAUTHORIZED,
-          responseBody: {
-            success: false,
-          },
-        };
-      }
-
-      const authUser = {
-        email: dbUser.email,
-      };
-
-      return {
-        statusHeader: StatusCodes.OK,
-        responseBody: {
-          success: true,
-          data: authUser,
-        },
-      };
-    } catch (error) {
-      console.log('me error', error);
-      throw error;
+    if (!dbUser) {
+      await this.redisClient.del(sessionId);
+      throw new AppError(StatusCodes.UNAUTHORIZED);
     }
+
+    const authUser = {
+      email: dbUser.email,
+    };
+
+    return {
+      statusHeader: StatusCodes.OK,
+      responseBody: {
+        success: true,
+        data: authUser,
+      },
+    };
   }
 }

@@ -1,4 +1,4 @@
-import type { CookieOptions, Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import type { NextFunction } from 'express-serve-static-core';
 import { StatusCodes } from 'http-status-codes';
 import jwt from 'jsonwebtoken';
@@ -10,6 +10,9 @@ import type { RedisClient } from '@/data/redisClient.js';
 import { authConsts } from '@/lib/const.js';
 import type { AuthCookies } from '@/lib/interfaces/authCookies.js';
 import type { Session } from '@/lib/interfaces/session.js';
+import { AppError } from '@/lib/errors/appError.js';
+import { clearAuthCookies } from '@/lib/utils.js';
+import logger from '@/config/logger.js';
 
 export type RefreshMiddleware = ReturnType<typeof getRefreshGuard>;
 
@@ -19,37 +22,43 @@ export const getRefreshGuard = () => {
   return async (req: Request & { cookies: AuthCookies }, res: Response, next: NextFunction) => {
     try {
       const refreshToken = req.cookies[authConsts.REFRESH_TOKEN_NAME];
+      let decoded: any;
 
       if (!refreshToken) {
-        return res.status(StatusCodes.UNAUTHORIZED).send();
+        throw new AppError(StatusCodes.UNAUTHORIZED);
       }
 
-      const decoded: any = jwt.verify(refreshToken, env.REFRESH_TOKEN_KEY, {
-        algorithms: ['HS256'],
-        issuer: authConsts.TOKEN_ISSUER,
-        ignoreExpiration: false,
-        clockTolerance: 5,
-      });
+      try {
+        decoded = jwt.verify(refreshToken, env.REFRESH_TOKEN_KEY, {
+          algorithms: ['HS256'],
+          issuer: authConsts.TOKEN_ISSUER,
+          ignoreExpiration: false,
+          clockTolerance: 5,
+        });
+      } catch (error) {
+        throw new AppError(StatusCodes.UNAUTHORIZED);
+      }
 
       if (!decoded.sub || !decoded.jti || !decoded.sid) {
-        return res.status(StatusCodes.UNAUTHORIZED).send();
+        throw new AppError(StatusCodes.UNAUTHORIZED);
       }
 
       const session = await redisClient.get(decoded.sid);
 
       if (!session) {
-        return res.status(StatusCodes.UNAUTHORIZED).send();
+        throw new AppError(StatusCodes.UNAUTHORIZED);
       }
 
       const sessionObj: Session = JSON.parse(session);
 
       if (decoded.jti !== sessionObj.refreshTokenJti) {
+        logger.warn('Refresh token reuse detected');
+
         await redisClient.del(decoded.sid);
+        clearAuthCookies(res);
 
-        res.clearCookie(authConsts.ACCESS_TOKEN_NAME, authConsts.ACCESS_COOKIE_OPTIONS as CookieOptions);
-        res.clearCookie(authConsts.REFRESH_TOKEN_NAME, authConsts.REFRESH_COOKIE_OPTIONS as CookieOptions);
-
-        return res.status(StatusCodes.UNAUTHORIZED).send();
+        // TODO: Test is this OK, will cookies clear?
+        throw new AppError(StatusCodes.UNAUTHORIZED);
       }
 
       req.auth = {
@@ -60,12 +69,8 @@ export const getRefreshGuard = () => {
 
       return next();
     } catch (error) {
-      console.log(error);
-
-      res.clearCookie(authConsts.ACCESS_TOKEN_NAME, authConsts.ACCESS_COOKIE_OPTIONS as CookieOptions);
-      res.clearCookie(authConsts.REFRESH_TOKEN_NAME, authConsts.REFRESH_COOKIE_OPTIONS as CookieOptions);
-
-      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).send();
+      clearAuthCookies(res);
+      throw error;
     }
   };
 };
