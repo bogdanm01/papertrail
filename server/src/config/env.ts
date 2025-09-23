@@ -10,6 +10,7 @@ const EnvSchema = z.object({
   ACCESS_TOKEN_KEY: z.string(),
   REFRESH_TOKEN_KEY: z.string(),
   REDIS_URL: z.string(),
+  PINO_LOG_LEVEL: z.string().default('info'),
 });
 
 const env = EnvSchema.parse(process.env);
