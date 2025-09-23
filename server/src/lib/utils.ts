@@ -6,7 +6,13 @@ import z from 'zod';
 import { authConsts } from './const.js';
 import type { CookieOptions, Response } from 'express';
 
-export function requiredJSONBody(schema: $ZodType) {
+/**
+ * Builds an OpenAPI request body definition that mandates JSON matching the provided Zod schema.
+ *
+ * @param schema - Zod schema describing the expected JSON payload.
+ * @returns An object that can be spread into an OpenAPI route spec.
+ */
+export const requiredJSONBody = (schema: $ZodType) => {
   return {
     required: true,
     content: {
@@ -15,7 +21,7 @@ export function requiredJSONBody(schema: $ZodType) {
       },
     },
   };
-}
+};
 
 /**
  * Creates a JSON Web Token (JWT) with the provided claims and signing options.
@@ -53,6 +59,11 @@ export const createJWT = (
   });
 };
 
+/**
+ * Removes access and refresh cookies using the configured cookie options.
+ *
+ * @param res - Express response to clear cookies on.
+ */
 export const clearAuthCookies = (res: Response<any, Record<string, any>>) => {
   res.clearCookie(authConsts.ACCESS_TOKEN_NAME, authConsts.ACCESS_COOKIE_OPTIONS as CookieOptions);
   res.clearCookie(authConsts.REFRESH_TOKEN_NAME, authConsts.REFRESH_COOKIE_OPTIONS as CookieOptions);
