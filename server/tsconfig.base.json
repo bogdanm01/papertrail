@@ -29,6 +29,6 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
 
-    "typeRoots": ["./types"]
+    "typeRoots": ["./src/lib/types"]
   }
 }
