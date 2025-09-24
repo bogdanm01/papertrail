@@ -9,8 +9,7 @@ import { eq } from 'drizzle-orm';
 @injectable()
 export class UserRepository extends GenericRepository<User, UserInsert> {
   constructor(@inject(TOKENS.db) db: DbClient) {
-    super(db, userTable, 'id');
-    this.db = db;
+    super(db, userTable);
   }
 
   public async findByEmail(email: string): Promise<User | null> {
