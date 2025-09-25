@@ -1,13 +1,13 @@
+import { useState } from "react";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { createFileRoute } from "@tanstack/react-router";
+import { Loader2Icon } from "lucide-react";
+import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { Header } from "@/components/loginPage/Header";
 import { Button } from "@/components/ui/button";
-
-import { Header } from "../components/loginPage/Header";
-
-import { Loader2Icon, Mail, SearchIcon, Lock } from "lucide-react";
-
-import googleIcon from "/icon-google.svg";
-import { useForm } from "react-hook-form";
 import {
   Form,
   FormControl,
@@ -17,16 +17,18 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import googleIcon from "/icon-google.svg";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+export const Route = createFileRoute("/_auth/login")({
+  component: RouteComponent,
+});
 
 const formSchema = z.object({
   email: z.email("Please enter a valid email").min(2).max(50),
   password: z.string().nonempty("Please enter a password"),
 });
 
-function LoginPage() {
+function RouteComponent() {
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -71,15 +73,6 @@ function LoginPage() {
                           type="email"
                           {...field}
                         ></Input>
-
-                        {/* <div className="relative w-full max-w-sm">
-                          <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
-                          <Input
-                            type="email"
-                            placeholder="Enter your email"
-                            className="pl-9"
-                          />
-                        </div> */}
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -100,15 +93,6 @@ function LoginPage() {
                           type="password"
                           {...field}
                         ></Input>
-
-                        {/* <div className="relative w-full max-w-sm">
-                          <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
-                          <Input
-                            type="password"
-                            placeholder="Enter your password"
-                            className="pl-9"
-                          />
-                        </div> */}
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -156,5 +140,3 @@ function LoginPage() {
     </div>
   );
 }
-
-export default LoginPage;
