@@ -1,86 +1,157 @@
-import Button from "../components/Button";
-import { EyeIcon } from "../components/icons/EyeIcon";
+import { z } from "zod";
+
+import { Button } from "@/components/ui/button";
+
 import { Header } from "../components/loginPage/Header";
 
+import { Loader2Icon, Mail, SearchIcon, Lock } from "lucide-react";
+
 import googleIcon from "/icon-google.svg";
+import { useForm } from "react-hook-form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
+
+const formSchema = z.object({
+  email: z.email("Please enter a valid email").min(2).max(50),
+  password: z.string().nonempty("Please enter a password"),
+});
 
 function LoginPage() {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    console.log(values);
+    setIsLoading(true);
+
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 3000);
+  }
+
   return (
-    <div className="bg-neutral-100 h-screen flex items-center justify-center">
-      <div className="bg-neutral-0 p-12 rounded-xl flex flex-col gap-4 w-[540px] large-shadow border border-neutral-200">
-        <Header
-          headline="Welcome to Note"
-          tagline="Please log in to continue"
-        />
+    <div className="bg-gradient-to-br from-gray-50 via-zinc-50 to-slate-50 h-screen flex items-center justify-center">
+      <div className="flex large-shadow border rounded-md border-neutral-100 w-4xl h-[576px] bg-neutral-0 overflow-hidden">
+        <div className="w-1/2 h-full p-12 flex flex-col gap-5 justify-center">
+          <Header
+            headline="Welcome Back"
+            tagline="Please enter your details to continue"
+          />
 
-        <CustomInput
-          id="email"
-          placeholder="Email address"
-          label="Email Address"
-          type="email"
-        />
-        <CustomInput
-          id="password"
-          placeholder="Password"
-          label="Password"
-          type="password"
-          icon={
-            <button
-              className="absolute top-0 bottom-0 right-4 my-auto mx-0 cursor-pointer h-fit"
-              aria-label="Show password"
-            >
-              <EyeIcon className="fill-neutral-500" />
-            </button>
-          }
-        />
-        <Button handleClick={() => {}}>Login</Button>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-7">
+              <FormItem>
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input
+                          className="py-[18px]"
+                          placeholder="Enter your email"
+                          type="email"
+                          {...field}
+                        ></Input>
 
-        <div className="border-t border-neutral-200 flex flex-col text-center pt-6 gap-4">
-          <p className="text-preset-5 text-neutral-600">Or log in with:</p>
-          <Button
-            handleClick={() => {}}
-            variant="outline"
-            radius="xl"
-            fontWeight="medium"
-          >
-            <img src={googleIcon} alt="google icon" />
-            Google
-          </Button>
-        </div>
+                        {/* <div className="relative w-full max-w-sm">
+                          <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+                          <Input
+                            type="email"
+                            placeholder="Enter your email"
+                            className="pl-9"
+                          />
+                        </div> */}
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </FormItem>
+              <FormItem>
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Password</FormLabel>
+                      <FormControl>
+                        <Input
+                          className="py-[18px]"
+                          placeholder="Enter your password"
+                          type="password"
+                          {...field}
+                        ></Input>
 
-        <hr className="text-neutral-200" />
+                        {/* <div className="relative w-full max-w-sm">
+                          <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+                          <Input
+                            type="password"
+                            placeholder="Enter your password"
+                            className="pl-9"
+                          />
+                        </div> */}
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </FormItem>
+              <Button
+                className="w-full cursor-pointer"
+                size="lg"
+                disabled={isLoading}
+              >
+                {isLoading && <Loader2Icon className="animate-spin" />}
+                {isLoading ? "Please wait" : "Sign In"}
+              </Button>
+            </form>
+          </Form>
 
-        <footer className="text-center">
-          <p className="text-preset-5 text-neutral-600">
-            No account yet?{" "}
-            <span
-              className="text-neutral-950 cursor-pointer"
-              role="button"
-              tabIndex={0}
-            >
-              Sign Up
+          <div className="flex items-center justify-center">
+            <hr className="h-[1px] w-full bg-neutral-700" />
+            <span className="px-3 text-sm text-nowrap text-neutral-600">
+              or
             </span>
-          </p>
-        </footer>
-      </div>
-    </div>
-  );
-}
+            <hr className="h-[1px] w-full bg-neutral-700" />
+          </div>
 
-export function CustomInput({ id, label, type, placeholder, icon }: any) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-preset-4 text-neutral-950">
-        {label}
-      </label>
-      <div className="relative">
-        <input
-          id={id}
-          type={type}
-          className="px-4 py-2.5 pr-10 placeholder:text-preset-5 border-neutral-300 border rounded-lg text-neutral-950 w-full"
-          placeholder={placeholder}
-        />
-        {icon}
+          <Button className="w-full cursor-pointer" variant="outline" size="lg">
+            <img src={googleIcon} alt="google icon" />
+            Sign In with Google
+          </Button>
+
+          <p className="text-center text-preset-5 mt-3">
+            No account yet?{" "}
+            <a tabIndex={0} className="font-medium cursor-pointer">
+              Sign Up
+            </a>
+          </p>
+        </div>
+        <div className="w-1/2 h-full p-2">
+          <img
+            className="w-full h-full object-cover rounded"
+            src="https://images.unsplash.com/photo-1755398104195-294a494782e8?q=80&w=2240&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+          />
+        </div>
       </div>
     </div>
   );

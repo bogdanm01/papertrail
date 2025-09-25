@@ -1,7 +1,7 @@
 import Button from "../components/Button";
 import { EyeIcon } from "../components/icons/EyeIcon";
 import { Header } from "../components/loginPage/Header";
-import { CustomInput } from "./Login";
+// import { CustomInput } from "./Login";
 
 import googleIcon from "/icon-google.svg";
 
@@ -14,7 +14,7 @@ function ResetPasswordPage() {
           tagline="Choose a new password to secure your account."
         ></Header>
 
-        <CustomInput
+        {/* <CustomInput
           id="newPassword"
           label="New Password"
           type="password"
@@ -39,7 +39,7 @@ function ResetPasswordPage() {
               <EyeIcon className="fill-neutral-500" />
             </button>
           }
-        />
+        /> */}
         <Button handleClick={() => {}}>Reset Password</Button>
       </div>
     </div>

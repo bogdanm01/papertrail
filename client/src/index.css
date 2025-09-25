@@ -18,7 +18,6 @@ html {
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
 
-  /* Neutral */
   --color-neutral-950: #0e121b;
   --color-neutral-900: #191b25;
   --color-neutral-800: #232530;
@@ -32,16 +31,13 @@ html {
   --color-neutral-50: #f5f7fa;
   --color-neutral-0: #ffffff;
 
-  /* Blue */
   --color-blue-700: #2547d0;
   --color-blue-500: #335cff;
   --color-blue-50: #ebf1ff;
 
-  /* Green */
   --color-green-500: #21c16b;
   --color-green-100: #d1fbe9;
 
-  /* Red */
   --color-red-500: #fb3748;
   --color-red-100: #ffd5d8;
 }

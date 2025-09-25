@@ -1,7 +1,7 @@
 import Button from "../components/Button";
 import { EyeIcon } from "../components/icons/EyeIcon";
 import { Header } from "../components/loginPage/Header";
-import { CustomInput } from "./Login";
+
 
 import googleIcon from "/icon-google.svg";
 
@@ -13,7 +13,7 @@ function SignupPage() {
           headline="Create Your Account"
           tagline="Sign up to start organizing your notes and boost your productivity."
         ></Header>
-
+{/* 
         <CustomInput
           id="email"
           placeholder="Email address"
@@ -33,7 +33,7 @@ function SignupPage() {
               <EyeIcon className="fill-neutral-500" />
             </button>
           }
-        />
+        /> */}
         <Button handleClick={() => {}}>Sign up</Button>
 
         <div className="border-t border-neutral-200 flex flex-col text-center pt-6 gap-4">
