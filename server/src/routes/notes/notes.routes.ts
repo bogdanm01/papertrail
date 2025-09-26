@@ -6,6 +6,6 @@ const noteRouter = Router();
 
 // noteRouter.get('/', notes.getAllNotes);
 
-noteRouter.get('/:id', notes.getNote);
+// noteRouter.get('/:id', notes.getNote);
 
 export default noteRouter;

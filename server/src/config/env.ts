@@ -11,6 +11,7 @@ const EnvSchema = z.object({
   REFRESH_TOKEN_KEY: z.string(),
   REDIS_URL: z.string(),
   PINO_LOG_LEVEL: z.string().default('info'),
+  CORS_ORIGIN: z.string().default('http://localhost:5173'),
 });
 
 const env = EnvSchema.parse(process.env);

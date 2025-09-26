@@ -4,12 +4,14 @@ import cookieParser from 'cookie-parser';
 import express from 'express';
 
 import env from './config/env.js';
-import getAuthRouter from './routes/auth/auth.routes.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 import logger from '@/config/logger.js';
 import registerDependencies from './config/registerDependencies.js';
 import setupScalar from './config/setupScalar.js';
 import registerRoutes from './config/registerRoutes.js';
+import helmet from 'helmet';
+
+import cors from 'cors';
 
 await registerDependencies().catch(err => {
   logger.error(err, 'Failed to register dependencies');
@@ -20,9 +22,13 @@ const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-// app.use(helmet());
-
-// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+app.use(helmet());
+app.use(
+  cors({
+    origin: env.CORS_ORIGIN,
+    credentials: true,
+  })
+);
 app.use(cookieParser());
 
 registerRoutes(app);
