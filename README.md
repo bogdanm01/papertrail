@@ -41,12 +41,13 @@ It provides a unified space where individuals and teams can **write, organize, b
 Papertrail is being developed as a **full-stack web application**, prioritizing scalability, extensibility, and developer experience.
 
 - **Frontend**
-  - React, TypeScript, TanStack Router, TanStack Query
+  - React + TypeScript + TanStack Router and Query
+  - ShadcnUI components
   - Collaborative editor (Markdown + canvas/whiteboard)
   - Real-time sync powered by WebSockets / CRDTs
 
 - **Backend**
-  - Node.js + Express + TypeScript
+  - Node.js, Express, TypeScript
   - PostgreSQL with Drizzle ORM
   - Redis for caching and session management
   - REST + WebSocket APIs
