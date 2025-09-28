@@ -1,12 +1,12 @@
 import { useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Loader2Icon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { Header } from "@/components/loginPage/Header";
+import { AuthHeader } from "@/components/loginPage/AuthHeader";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -39,22 +39,15 @@ function RouteComponent() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    setIsLoading(true);
-
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 3000);
-  }
+  async function onSubmit(values: z.infer<typeof formSchema>) {}
 
   return (
     <div className="bg-gradient-to-br from-gray-50 via-zinc-50 to-slate-50 h-screen flex items-center justify-center">
       <div className="flex large-shadow border rounded-md border-neutral-100 w-4xl h-[576px] bg-neutral-0 overflow-hidden">
         <div className="w-1/2 h-full p-12 flex flex-col gap-5 justify-center">
-          <Header
-            headline="Welcome Back"
-            tagline="Please enter your details to continue"
+          <AuthHeader
+            headline="Welcome back."
+            tagline="Please enter your details to continue."
           />
 
           <Form {...form}>
@@ -91,10 +84,10 @@ function RouteComponent() {
                           className="py-[18px]"
                           placeholder="Enter your password"
                           type="password"
+                          autoComplete="none"
                           {...field}
                         ></Input>
                       </FormControl>
-                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -120,20 +113,20 @@ function RouteComponent() {
 
           <Button className="w-full cursor-pointer" variant="outline" size="lg">
             <img src={googleIcon} alt="google icon" />
-            Sign In with Google
+            Continue with Google
           </Button>
 
           <p className="text-center text-preset-5 mt-3">
             No account yet?{" "}
             <a tabIndex={0} className="font-medium cursor-pointer">
-              Sign Up
+              <Link to="/register">Sign Up</Link>
             </a>
           </p>
         </div>
         <div className="w-1/2 h-full p-2">
           <img
             className="w-full h-full object-cover rounded"
-            src="https://images.unsplash.com/photo-1755398104195-294a494782e8?q=80&w=2240&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+            src="https://images.unsplash.com/photo-1688494952956-ccf8c0042a9d?q=80&w=774&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
           />
         </div>
       </div>
