@@ -22,7 +22,20 @@ const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        'script-src': [
+          "'self'",
+          ...(env.NODE_ENV === 'development'
+            ? ['https://cdn.jsdelivr.net/npm/@scalar/api-reference', "'unsafe-inline'"]
+            : []),
+        ],
+      },
+    },
+  })
+);
 app.use(
   cors({
     origin: env.CORS_ORIGIN,
