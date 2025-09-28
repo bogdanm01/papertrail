@@ -118,9 +118,9 @@ function RouteComponent() {
 
           <p className="text-center text-preset-5 mt-3">
             No account yet?{" "}
-            <a tabIndex={0} className="font-medium cursor-pointer">
-              <Link to="/register">Sign Up</Link>
-            </a>
+            <Link to="/register">
+              <span className="font-medium cursor-pointer">Sign In</span>
+            </Link>
           </p>
         </div>
         <div className="w-1/2 h-full p-2">
