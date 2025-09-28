@@ -1,6 +1,6 @@
 import { AuthHeader } from "@/components/loginPage/AuthHeader";
 import { Button } from "@/components/ui/button";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import googleIcon from "/icon-google.svg";
 import {
   Form,
@@ -15,7 +15,7 @@ import { Loader2Icon } from "lucide-react";
 import z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useSignUp } from "@/hooks/useSignUp";
 
 export const Route = createFileRoute("/_auth/register")({
   component: RouteComponent,
@@ -27,12 +27,13 @@ const formSchema = z.object({
     .string()
     .regex(
       /^(?=.{8,})(?:(?=.*\d)|(?=.*[^A-Za-z0-9])).*$/,
-      "Password must be at least 8 characters long and contain a number or a symbol"
+      "Must be 8+ characters with number or symbol"
     ),
 });
 
 function RouteComponent() {
-  const [isLoading, setIsLoading] = useState(false);
+  const { signUp, isLoading, error } = useSignUp();
+  const navigate = useNavigate({ from: "/register" });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -42,11 +43,17 @@ function RouteComponent() {
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {}
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    await signUp(values);
+
+    if (!error && !isLoading) {
+      navigate({ to: "/dashbord" });
+    }
+  }
 
   return (
     <div className="bg-gradient-to-br from-gray-50 via-zinc-50 to-slate-50 h-screen flex items-center justify-center">
-      <div className="flex large-shadow border rounded-md border-neutral-100 w-4xl h-[576px] bg-neutral-0 overflow-hidden">
+      <div className="flex large-shadow border rounded-md border-neutral-100 h-[576px] w-4xl bg-neutral-0 overflow-hidden">
         <div className="w-1/2 h-full p-12 flex flex-col gap-5 justify-center">
           <AuthHeader headline="Welcome!" tagline="Create a new account." />
 
@@ -57,7 +64,7 @@ function RouteComponent() {
                   control={form.control}
                   name="email"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="relative">
                       <FormLabel>Email</FormLabel>
                       <FormControl>
                         <Input
@@ -67,7 +74,8 @@ function RouteComponent() {
                           {...field}
                         ></Input>
                       </FormControl>
-                      <FormMessage />
+
+                      {/* <FormMessage /> */}
                     </FormItem>
                   )}
                 />
@@ -119,15 +127,17 @@ function RouteComponent() {
 
           <p className="text-center text-preset-5 mt-3">
             Already have an account?{" "}
-            <a tabIndex={0} className="font-medium cursor-pointer">
-              <Link to="/login">Sign In</Link>
+            <a tabIndex={0}>
+              <Link to="/login">
+                <span className="font-medium cursor-pointer">Sign In</span>
+              </Link>
             </a>
           </p>
         </div>
         <div className="w-1/2 h-full p-2">
           <img
             className="w-full h-full object-cover rounded"
-            src="https://images.unsplash.com/photo-1685334467005-ccd47b955315?q=80&w=626&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+            src="https://images.unsplash.com/photo-1514621166532-aa7eb1a3a2f4?q=80&w=774&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
           />
         </div>
       </div>
