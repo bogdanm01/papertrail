@@ -1,11 +1,10 @@
 import { useState } from "react";
 import axiosClient from "@/axiosClient";
-import { useNavigate } from "@tanstack/react-router";
 
 export const useSignUp = () => {
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string>();
+  const [error, setError] = useState(null);
 
   const signUp = async (payload: { email: string; password: string }) => {
     setIsLoading(true);
@@ -13,14 +12,17 @@ export const useSignUp = () => {
     try {
       const response = await axiosClient.post("/api/v1/auth/sign-up", payload);
       setData(response.data);
-    } catch (error: any) {
-      if (error.response) {
-        setError(error.response.data);
-      } else if (error.request) {
-        setError(error.request);
-      } else {
-        setError((error as Error).message as string);
-      }
+
+      return response.data;
+    } catch (e: any) {
+      const message =
+        e?.response?.data?.message ??
+        e?.response?.statusText ??
+        e?.message ??
+        "Unknown error";
+      setError(message);
+
+      return { success: false, error: message };
     } finally {
       setIsLoading(false);
     }

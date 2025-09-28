@@ -32,7 +32,7 @@ const formSchema = z.object({
 });
 
 function RouteComponent() {
-  const { signUp, isLoading, error } = useSignUp();
+  const { signUp, isLoading } = useSignUp();
   const navigate = useNavigate({ from: "/register" });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -44,18 +44,21 @@ function RouteComponent() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    await signUp(values);
+    const result = await signUp(values);
 
-    if (!error && !isLoading) {
-      navigate({ to: "/dashbord" });
+    if (result.success) {
+      navigate({ to: "/dashboard" });
     }
   }
 
   return (
     <div className="bg-gradient-to-br from-gray-50 via-zinc-50 to-slate-50 h-screen flex items-center justify-center">
-      <div className="flex large-shadow border rounded-md border-neutral-100 h-[576px] w-4xl bg-neutral-0 overflow-hidden">
+      <div className="flex z-10 large-shadow border rounded-md border-neutral-100 h-[576px] w-4xl bg-neutral-0 overflow-hidden">
         <div className="w-1/2 h-full p-12 flex flex-col gap-5 justify-center">
-          <AuthHeader headline="Welcome!" tagline="Create a new account." />
+          <AuthHeader
+            headline="Welcome!"
+            tagline="Create an account to get started."
+          />
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-7">
@@ -127,11 +130,9 @@ function RouteComponent() {
 
           <p className="text-center text-preset-5 mt-3">
             Already have an account?{" "}
-            <a tabIndex={0}>
-              <Link to="/login">
-                <span className="font-medium cursor-pointer">Sign In</span>
-              </Link>
-            </a>
+            <Link to="/login">
+              <span className="font-medium cursor-pointer">Sign In</span>
+            </Link>
           </p>
         </div>
         <div className="w-1/2 h-full p-2">
