@@ -119,7 +119,7 @@ function RouteComponent() {
           <p className="text-center text-preset-5 mt-3">
             No account yet?{" "}
             <Link to="/register">
-              <span className="font-medium cursor-pointer">Sign In</span>
+              <span className="font-medium cursor-pointer">Sign Up</span>
             </Link>
           </p>
         </div>
