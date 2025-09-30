@@ -42,7 +42,7 @@ Papertrail is being developed as a **full-stack web application**, prioritizing 
 
 - **Frontend**
   - React + TypeScript + TanStack Router and Query
-  - ShadcnUI components
+  - ShadcnUI
   - Collaborative editor (Markdown + canvas/whiteboard)
   - Real-time sync powered by WebSockets / CRDTs
 
