@@ -21,7 +21,7 @@ export const getAccessGuard = () => {
     let decoded: any;
 
     if (!accessToken) {
-      throw new AppError(StatusCodes.UNAUTHORIZED);
+      throw new AppError(StatusCodes.UNAUTHORIZED, 'Access token missing');
     }
 
     // TODO: Test exp and issuer are verified
@@ -32,18 +32,18 @@ export const getAccessGuard = () => {
         ignoreExpiration: false,
         clockTolerance: 5,
       });
-    } catch (error) {
-      throw new AppError(StatusCodes.UNAUTHORIZED);
+    } catch (error: any) {
+      throw new AppError(StatusCodes.UNAUTHORIZED, error.message);
     }
 
     if (!decoded.sid || !decoded.sub) {
-      throw new AppError(StatusCodes.UNAUTHORIZED);
+      throw new AppError(StatusCodes.UNAUTHORIZED, 'sid or sub claims missing');
     }
 
     const session: string | null = await redisClient.get(decoded.sid);
 
     if (!session) {
-      throw new AppError(StatusCodes.UNAUTHORIZED);
+      throw new AppError(StatusCodes.UNAUTHORIZED, 'Session not found');
     }
 
     req.auth = {
