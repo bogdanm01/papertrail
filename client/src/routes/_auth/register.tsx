@@ -15,7 +15,7 @@ import { Loader2Icon } from "lucide-react";
 import z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useSignUp } from "@/hooks/useSignUp";
+import { useSignUp } from "@/hooks/query/auth/useSignUp";
 
 export const Route = createFileRoute("/_auth/register")({
   component: RouteComponent,
@@ -32,7 +32,8 @@ const formSchema = z.object({
 });
 
 function RouteComponent() {
-  const { signUp, isLoading } = useSignUp();
+  const { mutateAsync: signUp, isPending } = useSignUp();
+
   const navigate = useNavigate({ from: "/register" });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -44,11 +45,7 @@ function RouteComponent() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const result = await signUp(values);
-
-    if (result.success) {
-      navigate({ to: "/dashboard" });
-    }
+    await signUp(values, { onSuccess: () => navigate({ to: "/dashboard" }) });
   }
 
   return (
@@ -107,10 +104,10 @@ function RouteComponent() {
               <Button
                 className="w-full cursor-pointer"
                 size="lg"
-                disabled={isLoading}
+                disabled={isPending}
               >
-                {isLoading && <Loader2Icon className="animate-spin" />}
-                {isLoading ? "Please wait" : "Sign Up"}
+                {isPending && <Loader2Icon className="animate-spin" />}
+                {isPending ? "Please wait" : "Sign Up"}
               </Button>
             </form>
           </Form>
@@ -123,7 +120,12 @@ function RouteComponent() {
             <hr className="h-[1px] w-full bg-neutral-700" />
           </div>
 
-          <Button className="w-full cursor-pointer" variant="outline" size="lg">
+          <Button
+            disabled={isPending}
+            className="w-full cursor-pointer"
+            variant="outline"
+            size="lg"
+          >
             <img src={googleIcon} alt="google icon" />
             Continue with Google
           </Button>

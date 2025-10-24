@@ -1,7 +1,5 @@
-import { useState } from "react";
-
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Loader2Icon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -18,6 +16,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import googleIcon from "/icon-google.svg";
+import { useSignIn } from "@/hooks/query/auth/useSignIn";
 
 export const Route = createFileRoute("/_auth/login")({
   component: RouteComponent,
@@ -29,7 +28,8 @@ const formSchema = z.object({
 });
 
 function RouteComponent() {
-  const [isLoading, setIsLoading] = useState(false);
+  const { mutateAsync: signIn, isPending } = useSignIn();
+  const navigate = useNavigate();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -39,7 +39,9 @@ function RouteComponent() {
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {}
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    await signIn(values);
+  }
 
   return (
     <div className="bg-gradient-to-br from-gray-50 via-zinc-50 to-slate-50 h-screen flex items-center justify-center">
@@ -95,10 +97,10 @@ function RouteComponent() {
               <Button
                 className="w-full cursor-pointer"
                 size="lg"
-                disabled={isLoading}
+                disabled={isPending}
               >
-                {isLoading && <Loader2Icon className="animate-spin" />}
-                {isLoading ? "Please wait" : "Sign In"}
+                {isPending && <Loader2Icon className="animate-spin" />}
+                {isPending ? "Please wait" : "Sign In"}
               </Button>
             </form>
           </Form>
