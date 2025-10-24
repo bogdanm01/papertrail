@@ -1,15 +1,14 @@
-import { type RequestHandler } from 'express';
+import type { Request, Response } from 'express';
 
-import type { Note } from '@/data/entity.type.js';
+import { TOKENS } from '@/config/diTokens.js';
+import type { NoteService } from '@/services/note.service.js';
+import { inject, injectable } from 'tsyringe';
 
-import db from '@/data/db.js';
-import { noteTable } from '@/data/schema/note.schema.js';
+@injectable()
+export class NoteController {
+  constructor(@inject(TOKENS.noteService) private noteService: NoteService) {}
 
-// export const getAllNotes: RequestHandler = async (req, res) => {
-//   const notes: Note[] = await db.select().from(noteTable);
-//   res.status(200).send({ data: notes });
-// };
-
-export const getNote: RequestHandler = (req, res) => {
-  res.send('OK');
-};
+  public async createNote(req: Request, res: Response) {
+    await this.noteService.createNote({});
+  }
+}
