@@ -7,6 +7,8 @@ import { TOKENS } from './diTokens.js';
 
 import { AuthService } from '@/services/auth.service.js';
 import { UserRepository } from '@/data/repository/user.repository.js';
+import { NoteService } from '@/services/note.service.js';
+import { NoteRepository } from '@/data/repository/note.repository.js';
 
 /**
  * Registers application services and infrastructure clients into the DI container.
@@ -21,8 +23,12 @@ const registerDependencies = async () => {
 
   container.registerInstance<DbClient>(TOKENS.db, dbClient);
   container.registerInstance<RedisClient>(TOKENS.redis, redisClient);
-  container.register(TOKENS.authService, { useClass: AuthService });
-  container.register(TOKENS.userRepository, { useClass: UserRepository });
+
+  container.register<AuthService>(TOKENS.authService, { useClass: AuthService });
+  container.register<NoteService>(TOKENS.noteService, { useClass: NoteService });
+
+  container.register<UserRepository>(TOKENS.userRepository, { useClass: UserRepository });
+  container.register<NoteRepository>(TOKENS.noteRepository, { useClass: NoteRepository });
 };
 
 export default registerDependencies;
