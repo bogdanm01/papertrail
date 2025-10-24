@@ -1,15 +1,12 @@
-import { inject, injectable } from 'tsyringe';
 import type { DbClient } from '../db.js';
-import { TOKENS } from '@/config/diTokens.js';
-import { userTable } from '../schema/user.schema.js';
-import { PgTable, type PgTableWithColumns } from 'drizzle-orm/pg-core';
+import { type PgTableWithColumns } from 'drizzle-orm/pg-core';
 import { eq } from 'drizzle-orm';
 
 export class GenericRepository<TSelect, TInsert extends Record<string, any>> {
   constructor(
     protected db: DbClient,
     private readonly table: PgTableWithColumns<any>,
-    private readonly idColumn: string
+    private readonly idColumn: string = 'id'
   ) {}
 
   public async insert(obj: TInsert): Promise<TSelect> {
