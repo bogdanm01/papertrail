@@ -51,7 +51,7 @@ Papertrail is being developed as a **full-stack web application**, prioritizing 
   - PostgreSQL with Drizzle ORM
   - Redis for caching and session management
   - REST + WebSocket APIs
-  - OpenAPI/Swagger documentation
+  - OpenAPI + Scalar API documentation
 
 - **Infrastructure**
   - Dockerized local development environment
