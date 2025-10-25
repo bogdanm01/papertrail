@@ -13,6 +13,7 @@ import type { RedisClient } from '@/data/redisClient.js';
 import { TOKENS } from '@/config/diTokens.js';
 import type { UserRepository } from '@/data/repository/user.repository.js';
 import { AppError } from '@/lib/errors/appError.js';
+import type { AuthUser } from '@/lib/interfaces/authUser.js';
 
 const ACCESS_TTL_SEC = authConsts.ACCESS_TTL_SEC;
 const REFRESH_TTL_SEC = authConsts.REFRESH_TTL_SEC;
@@ -227,7 +228,8 @@ export class AuthService {
     };
   }
 
-  async me(userId: string, sessionId: string): Promise<ApiResponse<{ email: string }>> {
+  // TODO: Finish implementation, add interface
+  async me(userId: string, sessionId: string): Promise<ApiResponse<AuthUser>> {
     const dbUser: User | null = await this.userRepository.findById(userId);
 
     if (!dbUser) {
@@ -235,8 +237,11 @@ export class AuthService {
       throw new AppError(StatusCodes.UNAUTHORIZED);
     }
 
-    const authUser = {
+    const authUser: AuthUser = {
       email: dbUser.email,
+      name: dbUser.name,
+      profilePicture: dbUser.profilePicture,
+      onboardingStep: dbUser.onboardingStep,
     };
 
     return {
