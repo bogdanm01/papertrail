@@ -7,7 +7,7 @@ export const userTable = pgTable('user', {
   password: varchar('password').notNull(),
   profilePicture: varchar('profile_picture'),
   name: varchar('name'),
-  isDeleted: boolean('is_deleted').default(false),
+  isDeleted: boolean('is_deleted').default(false).notNull(),
   onboardingStep: integer('onboarding_step').default(1).notNull(),
   ...timestamps,
 });
