@@ -4,7 +4,7 @@ import { GenericRepository } from './generic.repository.js';
 import { TOKENS } from '@/config/diTokens.js';
 import { userTable } from '../schema/user.schema.js';
 import type { DbClient } from '../db.js';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 @injectable()
 export class UserRepository extends GenericRepository<User, UserInsert> {

@@ -1,6 +1,6 @@
 import type { DbClient } from '../db.js';
 import { type PgTableWithColumns } from 'drizzle-orm/pg-core';
-import { eq } from 'drizzle-orm';
+import { and, eq, SQL } from 'drizzle-orm';
 
 export class GenericRepository<TSelect, TInsert extends Record<string, any>> {
   constructor(
@@ -13,12 +13,15 @@ export class GenericRepository<TSelect, TInsert extends Record<string, any>> {
     return (await this.db.insert(this.table).values(obj).returning())[0] as TSelect;
   }
 
-  public async findById(id: string): Promise<TSelect | null> {
-    const rows = (await this.db
-      .select()
-      .from(this.table)
-      .where(eq(this.table[this.idColumn], id))
-      .limit(1)) as TSelect[];
+  public async findById<TColumns extends Partial<Record<keyof TSelect, never>>>(
+    id: string,
+    select?: { [K in keyof TColumns]: (typeof this.table)[K] },
+    filter?: SQL
+  ): Promise<TSelect | Partial<TSelect> | null> {
+    const selectQuery = select ? this.db.select(select as any) : this.db.select();
+    const whereClause = filter ? and(eq(this.table[this.idColumn], id), filter) : eq(this.table[this.idColumn], id);
+
+    const rows = await selectQuery.from(this.table).where(whereClause).limit(1);
 
     return rows[0] ?? null;
   }
