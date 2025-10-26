@@ -1,4 +1,4 @@
-import type { ErrorRequestHandler, RequestHandler } from 'express';
+import type { ErrorRequestHandler } from 'express';
 import { StatusCodes } from 'http-status-codes';
 
 import logger from '@/config/logger.js';
@@ -14,7 +14,7 @@ export const errorHandler: ErrorRequestHandler = (err: Error, req, res, next) =>
   if (err instanceof AppError) {
     return res.status(err.status).json({
       success: false,
-      message: err.clientMessage,
+      message: err.message ?? 'Error occurred',
     });
   }
 
