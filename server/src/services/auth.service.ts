@@ -102,14 +102,16 @@ export class AuthService {
     email: string,
     password: string
   ): Promise<ApiResponse<undefined> & { accessToken?: string; refreshToken?: string }> {
-    // TODO: Select id only
-    const user: User | null = await this.userRepository.findByEmail(email);
+    const user: Partial<User> | null = await this.userRepository.find(
+      { id: userTable.id, password: userTable.password },
+      eq(userTable.email, email)
+    );
 
     if (!user) {
       throw new AppError(StatusCodes.BAD_REQUEST, 'Incorrect credentials provided');
     }
 
-    const passwordMatches: boolean = await argon.verify(user.password, password);
+    const passwordMatches: boolean = await argon.verify(user.password!, password);
 
     if (!passwordMatches) {
       throw new AppError(StatusCodes.BAD_REQUEST, 'Incorrect credentials provided');
@@ -121,7 +123,7 @@ export class AuthService {
     const nowSec = Math.floor(new Date().getTime() / 1000);
 
     const sessionObj: Session = {
-      user: user.id,
+      user: user.id!,
       refreshTokenJti: refreshTokenJti,
       createdAt: new Date().toISOString(),
       updatedAt: null,
