@@ -137,13 +137,13 @@ export class AuthService {
     });
 
     const accessToken = createJWT(
-      { sub: user.id, exp: nowSec + ACCESS_TTL_SEC, iat: nowSec, sid: sessionId },
+      { sub: user.id!, exp: nowSec + ACCESS_TTL_SEC, iat: nowSec, sid: sessionId },
       { key: env.ACCESS_TOKEN_KEY }
     );
 
     const refreshToken = createJWT(
       {
-        sub: user.id,
+        sub: user.id!,
         exp: nowSec + REFRESH_TTL_SEC,
         iat: nowSec,
         sid: sessionId,
