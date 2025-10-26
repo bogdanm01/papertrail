@@ -14,6 +14,8 @@ import { TOKENS } from '@/config/diTokens.js';
 import type { UserRepository } from '@/data/repository/user.repository.js';
 import { AppError } from '@/lib/errors/appError.js';
 import type { AuthUser } from '@/lib/interfaces/authUser.js';
+import { userTable } from '@/data/schema/user.schema.js';
+import { eq } from 'drizzle-orm';
 
 const ACCESS_TTL_SEC = authConsts.ACCESS_TTL_SEC;
 const REFRESH_TTL_SEC = authConsts.REFRESH_TTL_SEC;
@@ -100,16 +102,17 @@ export class AuthService {
     email: string,
     password: string
   ): Promise<ApiResponse<undefined> & { accessToken?: string; refreshToken?: string }> {
+    // TODO: Select id only
     const user: User | null = await this.userRepository.findByEmail(email);
 
     if (!user) {
-      throw new AppError(StatusCodes.BAD_REQUEST, 'Incorrect user credentials');
+      throw new AppError(StatusCodes.BAD_REQUEST, 'Incorrect credentials provided');
     }
 
     const passwordMatches: boolean = await argon.verify(user.password, password);
 
     if (!passwordMatches) {
-      throw new AppError(StatusCodes.BAD_REQUEST, 'Incorrect user credentials');
+      throw new AppError(StatusCodes.BAD_REQUEST, 'Incorrect credentials provided');
     }
 
     // TODO: Consider session number limit
@@ -174,7 +177,7 @@ export class AuthService {
     const nowSec = Math.floor(new Date().getTime() / 1000);
     const session = await this.redisClient.get(sessionId);
 
-    // TODO: Get session from req.auth
+    // TODO: Get session from req.auth, this is already validated upstream
     if (!session) {
       throw new AppError(StatusCodes.UNAUTHORIZED);
     }
@@ -228,20 +231,24 @@ export class AuthService {
     };
   }
 
-  // TODO: Finish implementation, add interface
   async me(userId: string, sessionId: string): Promise<ApiResponse<AuthUser>> {
-    const dbUser: User | null = await this.userRepository.findById(userId);
+    const user: Partial<User> | null = await this.userRepository.findById(userId, {
+      email: userTable.email,
+      name: userTable.name,
+      onboardingStep: userTable.onboardingStep,
+      profilePicture: userTable.profilePicture,
+    });
 
-    if (!dbUser) {
+    if (!user) {
       await this.redisClient.del(sessionId);
       throw new AppError(StatusCodes.UNAUTHORIZED);
     }
 
     const authUser: AuthUser = {
-      email: dbUser.email,
-      name: dbUser.name,
-      profilePicture: dbUser.profilePicture,
-      onboardingStep: dbUser.onboardingStep,
+      email: user.email!,
+      name: user.name,
+      profilePicture: user.profilePicture,
+      onboardingStep: user.onboardingStep!,
     };
 
     return {
