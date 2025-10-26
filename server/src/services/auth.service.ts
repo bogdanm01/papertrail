@@ -177,13 +177,8 @@ export class AuthService {
     jti: string
   ): Promise<ApiResponse<undefined> & { accessToken?: string; refreshToken?: string }> {
     const nowSec = Math.floor(new Date().getTime() / 1000);
-    const session = await this.redisClient.get(sessionId);
 
-    // TODO: Get session from req.auth, this is already validated upstream
-    if (!session) {
-      throw new AppError(StatusCodes.UNAUTHORIZED);
-    }
-
+    const session: string = (await this.redisClient.get(sessionId)) as string; // validated in upstream
     const sessionObj: Session = JSON.parse(session) as Session;
 
     const newJti = crypto.randomUUID();

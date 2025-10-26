@@ -22,14 +22,14 @@ export const getRefreshGuard = () => {
   return async (req: Request & { cookies: AuthCookies }, res: Response, next: NextFunction) => {
     try {
       const refreshToken = req.cookies[authConsts.REFRESH_TOKEN_NAME];
-      let decoded: any;
+      let decodedRefreshToken: any;
 
       if (!refreshToken) {
         throw new AppError(StatusCodes.UNAUTHORIZED);
       }
 
       try {
-        decoded = jwt.verify(refreshToken, env.REFRESH_TOKEN_KEY, {
+        decodedRefreshToken = jwt.verify(refreshToken, env.REFRESH_TOKEN_KEY, {
           algorithms: ['HS256'],
           issuer: authConsts.TOKEN_ISSUER,
           ignoreExpiration: false,
@@ -39,11 +39,11 @@ export const getRefreshGuard = () => {
         throw new AppError(StatusCodes.UNAUTHORIZED);
       }
 
-      if (!decoded.sub || !decoded.jti || !decoded.sid) {
+      if (!decodedRefreshToken.sub || !decodedRefreshToken.jti || !decodedRefreshToken.sid) {
         throw new AppError(StatusCodes.UNAUTHORIZED);
       }
 
-      const session = await redisClient.get(decoded.sid);
+      const session = await redisClient.get(decodedRefreshToken.sid);
 
       if (!session) {
         throw new AppError(StatusCodes.UNAUTHORIZED);
@@ -51,10 +51,10 @@ export const getRefreshGuard = () => {
 
       const sessionObj: Session = JSON.parse(session);
 
-      if (decoded.jti !== sessionObj.refreshTokenJti) {
+      if (decodedRefreshToken.jti !== sessionObj.refreshTokenJti) {
         logger.warn('Refresh token reuse detected');
 
-        await redisClient.del(decoded.sid);
+        await redisClient.del(decodedRefreshToken.sid);
         clearAuthCookies(res);
 
         // TODO: Test is this OK, will cookies clear?
@@ -62,9 +62,9 @@ export const getRefreshGuard = () => {
       }
 
       req.auth = {
-        sessionId: decoded.sid,
-        userId: decoded.sub,
-        jti: decoded.jti,
+        sessionId: decodedRefreshToken.sid,
+        userId: decodedRefreshToken.sub,
+        jti: decodedRefreshToken.jti,
       };
 
       return next();
