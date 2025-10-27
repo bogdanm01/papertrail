@@ -34,7 +34,7 @@ export class AuthService {
     const isEmailRegistered = await this.userRepository.existsByEmail(email);
 
     if (isEmailRegistered) {
-      throw new AppError(StatusCodes.BAD_REQUEST, 'Email address is already in use');
+      throw new AppError(StatusCodes.BAD_REQUEST, 'An account with this email already exists');
     }
 
     const hashedPassword = await argon.hash(password, { type: argon.argon2id });
