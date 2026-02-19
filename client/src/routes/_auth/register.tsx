@@ -1,7 +1,6 @@
 import { AuthHeader } from "@/components/loginPage/AuthHeader";
 import { Button } from "@/components/ui/button";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import googleIcon from "/icon-google.svg";
 import {
   Form,
   FormControl,
@@ -17,8 +16,11 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSignUp } from "@/hooks/query/auth/useSignUp";
 
+import googleIcon from "@/assets/icon-google.svg";
+import registerBg from "@/assets/register-bg.avif";
+
 export const Route = createFileRoute("/_auth/register")({
-  component: RouteComponent,
+  component: Register,
 });
 
 const formSchema = z.object({
@@ -31,7 +33,7 @@ const formSchema = z.object({
     ),
 });
 
-function RouteComponent() {
+function Register() {
   const { mutateAsync: signUp, isPending } = useSignUp();
 
   const navigate = useNavigate({ from: "/register" });
@@ -140,7 +142,7 @@ function RouteComponent() {
         <div className="w-1/2 h-full p-2">
           <img
             className="w-full h-full object-cover rounded"
-            src="https://images.unsplash.com/photo-1514621166532-aa7eb1a3a2f4?q=80&w=774&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+            src={registerBg}
           />
         </div>
       </div>

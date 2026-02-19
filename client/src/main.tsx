@@ -11,9 +11,7 @@ import queryClient from "./lib/queryClient";
 
 const router = createRouter({
   routeTree,
-  context: {
-    queryClient,
-  },
+  context: { queryClient },
 });
 
 declare module "@tanstack/react-router" {

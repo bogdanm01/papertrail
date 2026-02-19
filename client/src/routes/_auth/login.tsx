@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Loader2Icon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -15,11 +15,16 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import googleIcon from "/icon-google.svg";
 import { useSignIn } from "@/hooks/query/auth/useSignIn";
 
+import googleIcon from "@/assets/icon-google.svg";
+import loginBg from "@/assets/login-bg.avif";
+
 export const Route = createFileRoute("/_auth/login")({
-  component: RouteComponent,
+  beforeLoad: ({ context }) => {
+    console.log(context);
+  },
+  component: Login,
 });
 
 const formSchema = z.object({
@@ -27,9 +32,9 @@ const formSchema = z.object({
   password: z.string().nonempty("Please enter a password"),
 });
 
-function RouteComponent() {
+function Login() {
   const { mutateAsync: signIn, isPending } = useSignIn();
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -126,10 +131,7 @@ function RouteComponent() {
           </p>
         </div>
         <div className="w-1/2 h-full p-2">
-          <img
-            className="w-full h-full object-cover rounded"
-            src="https://images.unsplash.com/photo-1688494952956-ccf8c0042a9d?q=80&w=774&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-          />
+          <img className="w-full h-full object-cover rounded" src={loginBg} />
         </div>
       </div>
     </div>

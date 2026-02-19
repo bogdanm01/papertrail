@@ -1,9 +1,9 @@
 import axiosClient from "@/lib/axiosClient";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 
 export const useSignIn = () => {
-  const queryClient = useQueryClient();
+  //   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
   return useMutation({

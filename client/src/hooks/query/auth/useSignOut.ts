@@ -9,7 +9,8 @@ export const useSignOut = () => {
   return useMutation({
     mutationFn: () => axiosClient.post("/api/v1/auth/sign-out"),
     onSuccess: () => {
-      queryClient.clear();
+      queryClient.setQueryData(["user"], undefined);
+      queryClient.invalidateQueries({ queryKey: ["user"] });
       navigate({ to: "/login" });
     },
   });
